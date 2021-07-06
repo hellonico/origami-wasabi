@@ -1,0 +1,3 @@
+; comments
+{:class origami.filters.ClojureFilter
+ :fn "(fn[mat] (org.opencv.imgproc.Imgproc/applyColorMap mat mat 3) mat)"}

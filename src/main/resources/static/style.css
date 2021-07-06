@@ -1,0 +1,12 @@
+li {
+    list-style: none;
+    margin-left: 0;
+}
+img {
+    float:left;
+    display: block;
+    max-width:128px;
+    max-height:128px;
+    width: auto;
+    height: auto;
+}
