@@ -1,2 +1,2 @@
 #!/bin/sh
-docker run -p 8080:8080 hellonico/wasabi
+docker run -d --name wasabi -p 8080:8080 hellonico/wasabi

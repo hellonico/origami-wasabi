@@ -1,3 +1,13 @@
+val ktorVersion = "1.6.1"
+val exposedVersion="0.32.1"
+val h2Version="1.4.200"
+val hikariCpVersion="4.0.3"
+val flywayVersion="7.11.0"
+val logbackVersion="1.2.3"
+val assertjVersion="3.20.2"
+val restAssuredVersion="4.4.0"
+val junitVersion="5.7.2"
+
 plugins {
     kotlin("jvm") version "1.5.20"
     kotlin("plugin.serialization") version "1.5.20"
@@ -17,25 +27,25 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
-    implementation("io.ktor:ktor-server-netty:$project.ktorVersion")
-    implementation("io.ktor:ktor-serialization:$project.ktorVersion")
-    implementation("io.ktor:ktor-websockets:$project.ktorVersion")
-    implementation("io.ktor:ktor-html-builder:$project.ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-serialization:$ktorVersion")
+    implementation("io.ktor:ktor-websockets:$ktorVersion")
+    implementation("io.ktor:ktor-html-builder:$ktorVersion")
 
-    implementation("com.h2database:h2:$project.h2Version")
-    implementation("org.jetbrains.exposed:exposed-core:$project.exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$project.exposedVersion")
-    implementation("com.zaxxer:HikariCP:$project.hikariCpVersion")
-    implementation("org.flywaydb:flyway-core:$project.flywayVersion")
-    implementation("ch.qos.logback:logback-classic:$project.logbackVersion")
+    implementation("com.h2database:h2:$h2Version")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("com.zaxxer:HikariCP:$hikariCpVersion")
+    implementation("org.flywaydb:flyway-core:$flywayVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("origami:filters:1.30")
     implementation("origami:origami:4.5.1-5")
 
-    testImplementation("org.assertj:assertj-core:$project.assertjVersion")
-    testImplementation("io.rest-assured:rest-assured:$project.restAssuredVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$project.junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$project.junitVersion")
-    testImplementation("io.ktor:ktor-client-cio:$project.ktorVersion")
+    testImplementation("org.assertj:assertj-core:$assertjVersion")
+    testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("io.ktor:ktor-client-cio:$ktorVersion")
 }
 
 application {
