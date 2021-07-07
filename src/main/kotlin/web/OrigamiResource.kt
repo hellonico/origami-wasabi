@@ -43,7 +43,7 @@ fun Route.origami(origamiService: OrigamiService) {
         }
 
         get("/view") {
-            val name = "Ktor"
+            val name = "Origami with Wasabi"
             val olist: List<model.Origami> = origamiService.getAll()
 
             call.respondHtml {
@@ -87,6 +87,9 @@ fun Route.origami(origamiService: OrigamiService) {
                                 inputStream.copyTo(it)
                             }
                         }
+                    }
+                    is PartData.BinaryItem -> {
+                        println("can do something here")
                     }
                 }
                 part.dispose()
