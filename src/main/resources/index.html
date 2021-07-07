@@ -2,45 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <title>Origami with Wasasbi</title>
     <meta name="author" content="Nicolas Modrzyk">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/2.7.0/alpine.js"
+            type="application/javascript"></script>
+
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-
-    <!-- Optional theme -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap-theme.min.css" integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
-
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+            integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+            integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+            crossorigin="anonymous"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/2.7.0/alpine.js" type="application/javascript"></script>
 </head>
 
 <body>
+<div class="container">
+    <div class="row">
+        <div class="col-4">
+            <img src="/static/wasabi.png" alt="wasabi"/>
+        </div>
 
-<div class="container mx-auto my-6">
-    <h1 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Wasasbi File Upload</h1>
-    <h1 x-data="{ message: 'I ❤️ Wasabi' }" x-text="message"></h1>
-    
-    <form enctype='multipart/form-data' method="POST" action="/origami/image" class="my-6" x-data="{ files1: null, files2 : null }">
+        <div class="col">
 
-        <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2" for="customFile">
-            <input name="customFile" type="file" class="sr-only" id="customFile" x-on:change="files1 = Object.values($event.target.files)">
-            <span x-text="files1 ? files1.map(file => file.name).join(', ') : 'Choose image'"></span>
-        </label>
-        <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2" for="customFile2">
-            <input name="customFile2" type="file" class="sr-only" id="customFile2" x-on:change="files2 = Object.values($event.target.files)">
-            <span x-text="files2 ? files2.map(file => file.name).join(', ') : 'Choose filter'"></span>
-        </label>
+            <h1 x-data="{ message: 'I ❤️ Wasabi' }" x-text="message"></h1>
+            <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Gallery</h2>
+            <a href="/origami/view">Link</a>
+            <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Curl</h2>
+            <pre><code>curl \
+  -F "data=@filter.edn" \
+  -F "data=@media.jpg" \
+  http://wasabi.hellonico.info/origami/image > hello.png</code></pre>
+            <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Upload</h2>
 
-        <button type="submit" class="bg-gray-300 text-gray-800 px-3 py-1 rounded">Submit</button>
-    </form>
 
+            <form enctype='multipart/form-data' method="POST" action="/origami/image" class="my-6"
+                  x-data="{ files1: null, files2 : null }">
+
+                <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
+                       for="customFile">
+                    <input name="customFile" type="file" class="sr-only" id="customFile"
+                           x-on:change="files1 = Object.values($event.target.files)">
+                    <span x-text="files1 ? files1.map(file => file.name).join(', ') : 'Choose image'"></span>
+                </label>
+                <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
+                       for="customFile2">
+                    <input name="customFile2" type="file" class="sr-only" id="customFile2"
+                           x-on:change="files2 = Object.values($event.target.files)">
+                    <span x-text="files2 ? files2.map(file => file.name).join(', ') : 'Choose filter'"></span>
+                </label>
+                <button type="submit" class="bg-gray-300 text-gray-800 px-3 py-1 rounded">Submit</button>
+            </form>
+
+        </div>
+    </div>
 </div>
-
 </body>
 </html>
 

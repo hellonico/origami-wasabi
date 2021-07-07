@@ -54,6 +54,7 @@ fun Route.origami(origamiService: OrigamiService) {
                     }
                 }
                 body {
+                        img(src="static/wasabi.png")
                         for(o:model.Origami in olist) {
                                 a(href="/out/${o.hash}.out.jpg") {
                                     img(src="/out/${o.hash}.out.jpg")
@@ -103,9 +104,14 @@ fun Route.origami(origamiService: OrigamiService) {
             Files.move(filterfile.toPath(), _filter.toPath())
 
             val mat = imread(fileIn.absolutePath)
-            val filter = Origami.StringToFilter(_filter)
-            val out: Mat = filter.apply(mat)
-            imwrite(fileOut.absolutePath, out )
+            // filter or not
+            try {
+                val filter = Origami.StringToFilter(_filter)
+                val out: Mat = filter.apply(mat)
+                imwrite(fileOut.absolutePath, out )
+            } catch(e:Exception) {
+                imwrite(fileOut.absolutePath, mat )
+            }
 
             origamiService.addOrigami(model.Origami(id=0,hash=hash,date=System.currentTimeMillis()))
 
@@ -116,7 +122,7 @@ fun Route.origami(origamiService: OrigamiService) {
     }
 }
 
-private fun savePartToFile(
+fun savePartToFile(
     part: PartData.FileItem,
     file: File
 ) {
