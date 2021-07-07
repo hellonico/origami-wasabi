@@ -71,13 +71,21 @@ fun Route.origami(origamiService: OrigamiService) {
             val filterfile = createTempFile("tmp_", ".edn")
 
             for (part in parts) {
+                println("Part: ${part.name} -> ${part.contentType}")
                 when (part) {
                     is PartData.FileItem -> {
-                        println("FileItem: ${part.name} -> ${part.originalFileName} of ${part.contentType}")
                         if (part.originalFileName!!.endsWith(".edn")) {
                             savePartToFile(part, filterfile)
                         } else {
                             savePartToFile(part, imgfile)
+                        }
+                    }
+                    is PartData.FormItem -> {
+                        print("form item ${part.value}")
+                        part.value.byteInputStream().use { inputStream ->
+                            filterfile.outputStream().buffered().use {
+                                inputStream.copyTo(it)
+                            }
                         }
                     }
                 }

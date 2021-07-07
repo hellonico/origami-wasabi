@@ -17,6 +17,7 @@ import web.origami
 import web.widget
 import java.time.Duration
 
+@ExperimentalCoroutinesApi
 fun Application.module() {
     install(DefaultHeaders)
     install(CallLogging)
