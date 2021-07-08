@@ -24,7 +24,7 @@ import java.nio.file.Files
 import kotlinx.html.*
 
 
-@ExperimentalCoroutinesApi
+
 fun Route.origami(origamiService: OrigamiService) {
 
 
@@ -66,63 +66,79 @@ fun Route.origami(origamiService: OrigamiService) {
 
         post("/image") {
             val multipart = call.receiveMultipart()
-            val parts: List<PartData> = multipart.readAllParts()
-
-            val imgfile = createTempFile("tmp_", ".jpg")
-            val filterfile = createTempFile("tmp_", ".edn")
-
-            for (part in parts) {
-                println("Part: ${part.name} -> ${part.contentType}")
-                when (part) {
-                    is PartData.FileItem -> {
-                        if (part.originalFileName!!.endsWith(".edn")) {
-                            savePartToFile(part, filterfile)
-                        } else {
-                            savePartToFile(part, imgfile)
-                        }
-                    }
-                    is PartData.FormItem -> {
-                        print("form item ${part.value}")
-                        part.value.byteInputStream().use { inputStream ->
-                            filterfile.outputStream().buffered().use {
-                                inputStream.copyTo(it)
-                            }
-                        }
-                    }
-                    is PartData.BinaryItem -> {
-                        println("can do something here")
-                    }
-                }
-                part.dispose()
-            }
-
-            val hash:Int = imgfile.absolutePath.hashCode()
-            val fileIn:File = File("out/${hash}.in.${imgfile.extension}")
-            val fileOut:File = File("out/${hash}.out.${imgfile.extension}")
-            val _filter:File = File("out/${hash}.filter.edn")
-            Files.move(imgfile.toPath(), fileIn.toPath())
-            Files.move(filterfile.toPath(), _filter.toPath())
-
-            val mat = imread(fileIn.absolutePath)
-            // filter or not
-            try {
-                val filter = Origami.StringToFilter(_filter)
-                val out: Mat = filter.apply(mat)
-                imwrite(fileOut.absolutePath, out )
-            } catch(e:Exception) {
-                imwrite(fileOut.absolutePath, mat )
-            }
-
-            origamiService.addOrigami(model.Origami(id=0,hash=hash,date=System.currentTimeMillis()))
+            val fileOut: File = processPost(multipart, origamiService)
 
             call.respondFile(fileOut)
 
         }
 
+        post("/form") {
+            val multipart = call.receiveMultipart()
+            val fileOut: File = processPost(multipart, origamiService)
+
+            call.respondRedirect("/origami/view")
+        }
+
+
     }
 }
 
-fun savePartToFile(
+private suspend fun processPost(
+    multipart: MultiPartData,
+    origamiService: OrigamiService
+): File {
+    val parts: List<PartData> = multipart.readAllParts()
+
+    val imgfile = createTempFile("tmp_", ".jpg")
+    val filterfile = createTempFile("tmp_", ".edn")
+
+    for (part in parts) {
+        println("Part: ${part.name} -> ${part.contentType}")
+        when (part) {
+            is PartData.FileItem -> {
+                if (part.originalFileName!!.endsWith(".edn")) {
+                    savePartToFile(part, filterfile)
+                } else {
+                    savePartToFile(part, imgfile)
+                }
+            }
+            is PartData.FormItem -> {
+                print("form item ${part.value}")
+                part.value.byteInputStream().use { inputStream ->
+                    filterfile.outputStream().buffered().use {
+                        inputStream.copyTo(it)
+                    }
+                }
+            }
+            is PartData.BinaryItem -> {
+                println("can do something here")
+            }
+        }
+        part.dispose()
+    }
+
+    val hash: Int = imgfile.absolutePath.hashCode()
+    val fileIn: File = File("out/${hash}.in.${imgfile.extension}")
+    val fileOut: File = File("out/${hash}.out.${imgfile.extension}")
+    val _filter: File = File("out/${hash}.filter.edn")
+    Files.move(imgfile.toPath(), fileIn.toPath())
+    Files.move(filterfile.toPath(), _filter.toPath())
+
+    val mat = imread(fileIn.absolutePath)
+    // filter or not
+    try {
+        val filter = Origami.StringToFilter(_filter)
+        val out: Mat = filter.apply(mat)
+        imwrite(fileOut.absolutePath, out)
+    } catch (e: Exception) {
+        imwrite(fileOut.absolutePath, mat)
+    }
+
+    origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis()))
+    return fileOut
+}
+
+private fun savePartToFile(
     part: PartData.FileItem,
     file: File
 ) {
