@@ -1,3 +1,6 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+}
 li {
     list-style: none;
     margin-left: 0;
@@ -9,4 +12,20 @@ img {
     max-height:128px;
     width: auto;
     height: auto;
+}
+.home {
+    display: block;
+}
+.home img{
+    width: 128px;
+    height: 128px;
+    margin-right:200px;
+}
+.home span{
+    font-size: 48pt;
+    margin-top: 5%;
+    float:right;
+}
+div {
+    float:left;
 }

@@ -49,17 +49,30 @@ fun Route.origami(origamiService: OrigamiService) {
             call.respondHtml {
                 head {
                     link(href="/static/style.css",rel="stylesheet")
+                    link(href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap",rel="stylesheet")
                     title {
                         +name
                     }
                 }
                 body {
-                        img(src="static/wasabi.png")
-                        for(o:model.Origami in olist) {
+                    div(classes = "home") {
+                        span{+"Gallery"}
+                        a(href="/") {
+                            img(src="/static/wasabi.png")
+                        }
+
+                    }
+                        br {
+
+                        }
+                        div {
+                            for(o:model.Origami in olist) {
                                 a(href="/out/${o.hash}.out.jpg") {
                                     img(src="/out/${o.hash}.out.jpg")
                                 }
+                            }
                         }
+
                 }
             }
         }
@@ -89,6 +102,12 @@ private suspend fun processPost(
 ): File {
     val parts: List<PartData> = multipart.readAllParts()
 
+    /**
+     * TODO: use this as the filter.
+     */
+    // val filterPart = parts.filter { it.name=="filter" }.get(0)
+    // println("found filter")
+
     val imgfile = createTempFile("tmp_", ".jpg")
     val filterfile = createTempFile("tmp_", ".edn")
 
@@ -102,6 +121,7 @@ private suspend fun processPost(
                     savePartToFile(part, imgfile)
                 }
             }
+            // filter is coming as form text
             is PartData.FormItem -> {
                 print("form item ${part.value}")
                 part.value.byteInputStream().use { inputStream ->
@@ -110,9 +130,9 @@ private suspend fun processPost(
                     }
                 }
             }
-            is PartData.BinaryItem -> {
-                println("can do something here")
-            }
+//            is PartData.BinaryItem -> {
+//                println("can do something here")
+//            }
         }
         part.dispose()
     }
