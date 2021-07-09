@@ -14,6 +14,12 @@ class OrigamiService {
             .singleOrNull()
     }
 
+    suspend fun deleteOrigami(id: Int) = dbQuery {
+        Origamis.deleteWhere {
+            (Origamis.hash eq id)
+        }
+    }
+
     suspend fun addOrigami(origami: Origami): Origami {
         var key = 0
         dbQuery {

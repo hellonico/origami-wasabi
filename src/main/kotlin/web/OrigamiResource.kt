@@ -6,10 +6,7 @@ import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.Route
-import io.ktor.routing.route
+import io.ktor.routing.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import model.Origamis
 import org.opencv.core.Mat
@@ -40,6 +37,13 @@ fun Route.origami(origamiService: OrigamiService) {
 
         get {
             call.respond(origamiService.getAll())
+        }
+
+        delete("/{did}") {
+            val did:Int = Integer.parseInt(call.parameters["did"])
+            println("delete me: "+did)
+            origamiService.deleteOrigami(did)
+            call.respondRedirect("/origami/view")
         }
 
         get("/view") {
