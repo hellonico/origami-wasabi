@@ -19,7 +19,8 @@ import java.io.File
 import java.nio.file.Files
 
 import kotlinx.html.*
-
+import origami.Filter
+import origami.Filters
 
 
 fun Route.origami(origamiService: OrigamiService) {
@@ -40,8 +41,8 @@ fun Route.origami(origamiService: OrigamiService) {
         }
 
         delete("/{did}") {
-            val did:Int = Integer.parseInt(call.parameters["did"])
-            println("delete me: "+did)
+            val did: Int = Integer.parseInt(call.parameters["did"])
+            println("delete me: " + did)
             origamiService.deleteOrigami(did)
             call.respondRedirect("/origami/view")
         }
@@ -52,30 +53,33 @@ fun Route.origami(origamiService: OrigamiService) {
 
             call.respondHtml {
                 head {
-                    link(href="/static/style.css",rel="stylesheet")
-                    link(href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap",rel="stylesheet")
+                    link(href = "/static/style.css", rel = "stylesheet")
+                    link(
+                        href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap",
+                        rel = "stylesheet"
+                    )
                     title {
                         +name
                     }
                 }
                 body {
                     div(classes = "home") {
-                        span{+"Gallery"}
-                        a(href="/") {
-                            img(src="/static/wasabi.png")
+                        span { +"Gallery" }
+                        a(href = "/") {
+                            img(src = "/static/wasabi.png")
                         }
 
                     }
-                        br {
+                    br {
 
-                        }
-                        div {
-                            for(o:model.Origami in olist) {
-                                a(href="/out/${o.hash}.out.jpg") {
-                                    img(src="/out/${o.hash}.out.jpg")
-                                }
+                    }
+                    div {
+                        for (o: model.Origami in olist) {
+                            a(href = "/out/${o.hash}.out.jpg") {
+                                img(src = "/out/${o.hash}.out.jpg")
                             }
                         }
+                    }
 
                 }
             }
@@ -83,92 +87,24 @@ fun Route.origami(origamiService: OrigamiService) {
 
         post("/image") {
             val multipart = call.receiveMultipart()
-            val fileOut: File = processPost(multipart, origamiService)
-
-            call.respondFile(fileOut)
-
+            val processor = util.ImgProcessor()
+            val result = processor.processPost(multipart, origamiService)
+            call.respond(result)
         }
 
         post("/form") {
             val multipart = call.receiveMultipart()
-            val fileOut: File = processPost(multipart, origamiService)
-
+            val processor = util.ImgProcessor()
+            util.ImgProcessor().processPost(multipart, origamiService)
             call.respondRedirect("/origami/view")
         }
 
 
     }
+
+
+
+
 }
 
-private suspend fun processPost(
-    multipart: MultiPartData,
-    origamiService: OrigamiService
-): File {
-    val parts: List<PartData> = multipart.readAllParts()
 
-    /**
-     * TODO: use this as the filter.
-     */
-    // val filterPart = parts.filter { it.name=="filter" }.get(0)
-    // println("found filter")
-
-    val imgfile = createTempFile("tmp_", ".jpg")
-    val filterfile = createTempFile("tmp_", ".edn")
-
-    for (part in parts) {
-        println("Part: ${part.name} -> ${part.contentType}")
-        when (part) {
-            is PartData.FileItem -> {
-                if (part.originalFileName!!.endsWith(".edn")) {
-                    savePartToFile(part, filterfile)
-                } else {
-                    savePartToFile(part, imgfile)
-                }
-            }
-            // filter is coming as form text
-            is PartData.FormItem -> {
-                print("form item ${part.value}")
-                part.value.byteInputStream().use { inputStream ->
-                    filterfile.outputStream().buffered().use {
-                        inputStream.copyTo(it)
-                    }
-                }
-            }
-//            is PartData.BinaryItem -> {
-//                println("can do something here")
-//            }
-        }
-        part.dispose()
-    }
-
-    val hash: Int = imgfile.absolutePath.hashCode()
-    val fileIn: File = File("out/${hash}.in.${imgfile.extension}")
-    val fileOut: File = File("out/${hash}.out.${imgfile.extension}")
-    val _filter: File = File("out/${hash}.filter.edn")
-    Files.move(imgfile.toPath(), fileIn.toPath())
-    Files.move(filterfile.toPath(), _filter.toPath())
-
-    val mat = imread(fileIn.absolutePath)
-    // filter or not
-    try {
-        val filter = Origami.StringToFilter(_filter)
-        val out: Mat = filter.apply(mat)
-        imwrite(fileOut.absolutePath, out)
-    } catch (e: Exception) {
-        imwrite(fileOut.absolutePath, mat)
-    }
-
-    origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis()))
-    return fileOut
-}
-
-private fun savePartToFile(
-    part: PartData.FileItem,
-    file: File
-) {
-    part.streamProvider().use { inputStream ->
-        file.outputStream().buffered().use {
-            inputStream.copyTo(it)
-        }
-    }
-}
