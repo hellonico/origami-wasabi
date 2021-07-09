@@ -61,12 +61,12 @@
                 <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
                        for="customFile">
                     <input name="customFile" type="file" class="sr-only" id="customFile"
-                           x-on:change="files1 = Object.values($event.target.files)">
+                           multiple="true" x-on:change="files1 = Object.values($event.target.files)">
                     <span x-text="files1 ? files1.map(file => file.name).join(', ') : 'Choose image'"></span>
                 </label>
                 <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
                        for="customFile2">
-                    <input name="customFile2" type="file" class="sr-only" id="customFile2"
+                    <input name="filter" type="file" class="sr-only" id="customFile2"
                            x-on:change="files2 = Object.values($event.target.files)">
                     <span x-text="files2 ? files2.map(file => file.name).join(', ') : 'Choose filter'"></span>
                 </label>
