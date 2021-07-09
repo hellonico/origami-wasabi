@@ -31,7 +31,7 @@ fun Application.module() {
     install(ContentNegotiation) {
         json(JsonMapper.defaultMapper)
     }
-    install(CORS)
+    // install(CORS)
 
     DatabaseFactory.connectAndMigrate()
 
