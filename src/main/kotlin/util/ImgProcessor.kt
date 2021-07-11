@@ -80,7 +80,13 @@ class ImgProcessor {
                 }
 
             }
-            return Origami.StringToFilter(filterfile)
+            try {
+                return Origami.StringToFilter(filterfile)
+            } catch (e:Exception) {
+                println("Could not load filter ${e.message}")
+                return Filters.NoOP()
+            }
+
         }
     }
 
