@@ -33,22 +33,31 @@
             style="background: white; border: 1px solid #dbdbdb; border-radius: 3px; padding: 40px; text-align: center;">
             <h2 style="font-weight: 300; margin-bottom: 20px; font-size: 24px; color:#262626;">Upload New Photo</h2>
 
-            <form enctype='multipart/form-data' method="POST" action="/origami/form" x-data="{ files1: null }">
+            <form enctype='multipart/form-data' method="POST" action="/origami/form"
+                x-data="{ files1: null, preview: null }">
 
-                <div style="border: 2px dashed #dbdbdb; padding: 40px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative;"
+                <div style="border: 2px dashed #dbdbdb; min-height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative; overflow: hidden;"
                     class="hover:border-gray-400 transition">
                     <input name="customFile" type="file" id="customFile"
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        x-on:change="files1 = Object.values($event.target.files)"
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" x-on:change="
+                                files1 = Object.values($event.target.files);
+                                if(files1.length > 0) {
+                                    let reader = new FileReader();
+                                    reader.onload = (e) => { preview = e.target.result; };
+                                    reader.readAsDataURL(files1[0]);
+                                }
+                           "
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index: 10;"
                         required>
-                    <div x-show="!files1">
+
+                    <div x-show="!preview" style="text-align: center; padding: 40px;">
                         <i class="fas fa-image fa-3x" style="color:#dbdbdb; margin-bottom:10px;"></i>
                         <p style="color:#8e8e8e;">Drag photos here or click to select</p>
                     </div>
-                    <div x-show="files1" style="display:none;">
-                        <p x-text="files1 ? files1.map(file => file.name).join(', ') : ''"
-                            style="font-weight:600; color:#262626;"></p>
+
+                    <div x-show="preview"
+                        style="display:none; width:100%; height:100%; position: absolute; top:0; left:0;">
+                        <img :src="preview" style="width:100%; height:100%; object-fit: cover;">
                     </div>
                 </div>
 
