@@ -15,6 +15,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         url = uri("https://repository.hellonico.info/repository/hellonico/")
@@ -38,8 +39,8 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCpVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("origami:filters:1.30")
-    implementation("origami:origami:4.5.1-5")
+    implementation("origami:filters:1.48")
+    implementation("origami:origami:4.13.0-2-SNAPSHOT")
 
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")
