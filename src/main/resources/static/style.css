@@ -63,7 +63,7 @@ body {
 .navbar {
     background: #fff;
     border-bottom: 1px solid #dbdbdb;
-    padding: 12px 20px;
+    padding: 15px 20px;
     margin-bottom: 30px;
     position: sticky;
     top: 0;
@@ -80,7 +80,7 @@ body {
 
 .logo {
     font-family: 'Grand Hotel', cursive;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 500;
 }
 
@@ -92,10 +92,10 @@ body {
     color: white;
     border: none;
     border-radius: 4px;
-    padding: 8px 16px;
+    padding: 10px 20px;
     /* Larger touch target */
     font-weight: 600;
-    font-size: 14px;
+    font-size: 16px;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
@@ -189,7 +189,16 @@ body {
 }
 
 .feed-actions {
-    padding: 10px 15px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+}
+
+.feed-actions i {
+    font-size: 26px !important;
+    margin-right: 24px !important;
+    padding: 5px;
+    /* Larger hit area */
 }
 
 .feed-tags {
@@ -253,14 +262,14 @@ body {
 
 .tag-pill {
     flex: 0 0 auto;
-    padding: 6px 12px;
-    margin-right: 10px;
+    padding: 8px 16px;
+    margin-right: 12px;
     background: #fff;
     border: 1px solid #dbdbdb;
-    border-radius: 16px;
+    border-radius: 20px;
     color: #262626;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
 }
 

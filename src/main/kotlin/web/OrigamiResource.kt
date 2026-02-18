@@ -52,6 +52,14 @@ fun Route.origami(origamiService: OrigamiService) {
             }
         }
 
+        get("/tags") {
+            try {
+                call.respond(origamiService.getAllTags())
+            } catch(e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, e.message ?: "Error")
+            }
+        }
+
         get("/json/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if(id != null) {

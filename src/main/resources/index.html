@@ -33,6 +33,7 @@
                 files2: null, 
                 preview: null,
                 allFilters: [],
+                allTags: [],
                 filterMode: 'list', 
                 selectedFilter: '',
                 hoveredFilter: null,
@@ -47,6 +48,13 @@
                             this.allFilters = data.sort();
                         })
                         .catch(e => console.error('Error fetching filters:', e));
+                        
+                    fetch('/origami/tags')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.allTags = data;
+                        })
+                        .catch(e => console.error('Error fetching tags:', e));
                 },
 
                 updatePreview(debounceMs = 0) {
@@ -91,6 +99,14 @@
                          reader.onload = (e) => { this.preview = e.target.result; };
                          reader.readAsDataURL(this.files1[0]);
                      }
+                },
+                
+                addTagFromList(t) {
+                    let current = this.tags ? this.tags.split(',').map(s => s.trim()) : [];
+                    if (!current.includes(t)) {
+                        current.push(t);
+                        this.tags = current.join(', ');
+                    }
                 },
 
                 async submitForm() {
@@ -202,6 +218,14 @@
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>
                     <input type="text" x-model="tags" placeholder="e.g. summer, beach (comma separated)"
                         style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 3px; outline:none;">
+
+                    <!-- Suggestions -->
+                    <div class="filter-bar" style="margin-top:10px; padding:0; gap:5px;" x-show="allTags.length > 0">
+                        <template x-for="t in allTags" :key="t">
+                            <div class="filter-chip" @click.prevent="addTagFromList(t)" x-text="'#'+t"
+                                style="padding:5px 12px; font-size:13px; background:#f0f0f0; border:none;"></div>
+                        </template>
+                    </div>
                 </div>
 
                 <button type="submit" class="upload-btn" style="width: 100%; padding: 10px; font-size: 14px;"
