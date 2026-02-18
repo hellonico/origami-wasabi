@@ -96,7 +96,6 @@
                     class="hover:border-gray-400 transition"
                     :style="(hoveredFilter !== null) ? 'border-color: #0095f6;' : ''">
                     <input name="customFile" type="file" id="customFile"
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         x-on:change="files1 = Object.values($event.target.files); updatePreview()"
                         style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index: 10;"
                         required>

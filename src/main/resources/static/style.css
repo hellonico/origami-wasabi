@@ -16,6 +16,8 @@
     /* Firefox */
     -ms-overflow-style: none;
     /* IE 10+ */
+    position: relative;
+    z-index: 50;
 }
 
 .filter-bar::-webkit-scrollbar {
