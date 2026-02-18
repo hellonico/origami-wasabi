@@ -242,9 +242,9 @@ body {
 
     /* Grid to Feed Conversion */
     .gallery-grid {
-        grid-template-columns: 1fr;
-        /* Single column */
-        gap: 15px;
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 images per row */
+        gap: 3px;
     }
 
     .container {

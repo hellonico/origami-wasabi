@@ -260,13 +260,13 @@ fun Route.origami(origamiService: OrigamiService) {
                                                  
                                                  <div class="feed-tags" style="margin-bottom:8px; padding:0;">
                                                     <template x-for="tag in img.tags ? img.tags.split(',').filter(t=>t.trim()!='') : []">
-                                                         <span style="color:#00376b; margin-right:5px;">#<span x-text="tag"></span></span>
+                                                         <a :href="'/origami/view?tag='+tag" style="color:#00376b; margin-right:5px; text-decoration:none;">#<span x-text="tag"></span></a>
                                                     </template>
                                                  </div>
 
                                                  <!-- Comments List -->
                                                   <div class="comments-list" style="margin-bottom:10px; padding: 0;">
-                                                      <template x-for="comment in (img.comments ? JSON.parse(img.comments) : [])">
+                                                      <template x-for="comment in parseComments(img.comments)">
                                                           <div style="font-size:14px; margin-bottom:4px;">
                                                               <span style="font-weight:600;" x-text="comment.author"></span> 
                                                               <span x-text="comment.text"></span>
@@ -323,6 +323,23 @@ fun Route.origami(origamiService: OrigamiService) {
                                         if (id) {
                                             this.fetchAndOpen(id);
                                         }
+                                    },
+                                    
+                                    /* Robust Comment Parsing Helper */
+                                    parseComments(comments) {
+                                        if (!comments) return [];
+                                        try {
+                                            // Ensure comments is a string before parsing
+                                            if (typeof comments === 'string') {
+                                                return JSON.parse(comments);
+                                            } else if (Array.isArray(comments)) {
+                                                // Should not happen with Kotlin data mapping but safe to handle
+                                                return comments;
+                                            }
+                                        } catch (e) {
+                                            console.error("Failed to parse comments JSON", e, comments);
+                                        }
+                                        return [];
                                     },
                                     
                                     async fetchAndOpen(id) {
