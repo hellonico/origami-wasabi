@@ -80,7 +80,7 @@ class OrigamiService {
 
     suspend fun updateComments(id: Int, json: String) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
-            it[comments] = json
+            it[Origamis.comments] = json
         }
     }
 

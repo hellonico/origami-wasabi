@@ -258,19 +258,19 @@ fun Route.origami(origamiService: OrigamiService) {
                                                  </div>
 
                                                  <!-- Comments List -->
-                                                  <div class="comments-list" style="margin-bottom:10px;">
+                                                  <div class="comments-list" style="margin-bottom:10px; padding: 0 15px;">
                                                       <template x-for="comment in (img.comments ? JSON.parse(img.comments) : [])">
-                                                          <div style="font-size:14px; margin-bottom:2px;">
+                                                          <div style="font-size:14px; margin-bottom:4px;">
                                                               <span style="font-weight:600;" x-text="comment.author"></span> 
                                                               <span x-text="comment.text"></span>
                                                           </div>
                                                       </template>
                                                   </div>
 
-                                                 <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''">
+                                                 <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''" style="padding: 0 15px;">
                                                      <input x-model="newComments[img.id]" :id="'comment-input-'+img.id" placeholder="Add a comment..." 
-                                                            style="width:100%; border:none; outline:none; font-size:14px; padding:5px 0;">
-                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
+                                                            style="width:100%; border:none; outline:none; font-size:14px; padding:10px 0; border-top:1px solid #efefef;">
+                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer; float:right;">Post</button>
                                                  </form>
                                             </div>
                                         </div>
@@ -297,7 +297,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                     currentTag: '${selectedTag ?: ""}',
                                     
                                     init() {
-                                        // Load liked state from storage
+                                        // Load liked state
                                         let stored = localStorage.getItem('wasabi_likes');
                                         if(stored) this.liked = JSON.parse(stored);
 
@@ -308,6 +308,32 @@ fun Route.origami(origamiService: OrigamiService) {
                                                }
                                             }
                                         });
+                                        
+                                        // Check for ID in URL
+                                        const urlParams = new URLSearchParams(window.location.search);
+                                        const id = urlParams.get('id');
+                                        if (id) {
+                                            this.fetchAndOpen(id);
+                                        }
+                                    },
+                                    
+                                    async fetchAndOpen(id) {
+                                        // Check local
+                                        let img = this.images.find(i => i.id == id);
+                                        if (img) {
+                                            this.openFeed(img);
+                                        } else {
+                                            // Fetch from server
+                                            try {
+                                                let res = await fetch('/origami/json/' + id);
+                                                if(res.ok) {
+                                                    let img = await res.json();
+                                                    // Add to top of images list
+                                                    this.images.unshift(img);
+                                                    this.openFeed(img);
+                                                }
+                                            } catch(e) { console.error('Error fetching image', e); }
+                                        }
                                     },
                                     
                                     onFeedScroll(e) {
@@ -348,18 +374,16 @@ fun Route.origami(origamiService: OrigamiService) {
                                     closeFeed() { 
                                         this.feedMode = false; 
                                         document.body.style.overflow = 'auto';
+                                        // Update URL back to clean
+                                        window.history.pushState({}, '', '/origami/view');
                                     },
 
                                     async toggleLike(img) {
-                                        // Update UI immediately (optimistic)
-                                        if(this.liked[img.id]) return; // Only allow 1 like per session/device for now for simplicity
-
+                                        if(this.liked[img.id]) return;
                                         this.liked[img.id] = true;
                                         localStorage.setItem('wasabi_likes', JSON.stringify(this.liked));
                                         
                                         img.likes = (img.likes || 0) + 1;
-
-                                        // API Call
                                         await fetch('/origami/' + img.id + '/like', { method: 'POST' });
                                     },
 
@@ -377,13 +401,12 @@ fun Route.origami(origamiService: OrigamiService) {
 
                                         if(res.ok) {
                                             let data = await res.json();
-                                            // Update local state
-                                            img.comments = data.comments; // Replace with updated list
+                                            img.comments = data.comments; // Update reactive list
                                         }
                                     },
                                     
                                     shareImage(img) {
-                                        let url = window.location.origin + '/out/' + img.hash + '.out.jpg';
+                                        let url = window.location.origin + '/origami/view?id=' + img.id;
                                         if (navigator.share) {
                                             navigator.share({
                                                 title: 'Wasabi Photo',
@@ -391,7 +414,6 @@ fun Route.origami(origamiService: OrigamiService) {
                                                 url: url,
                                             }).catch((error) => console.log('Error sharing', error));
                                         } else {
-                                            // Fallback
                                             prompt("Copy link to share:", url);
                                         }
                                     }

@@ -124,18 +124,26 @@ body {
 
 @media (max-width: 736px) {
     .gallery-grid {
-        gap: 3px;
-        /* Tighter grid on mobile */
+        grid-template-columns: 1fr;
+        /* Single column on mobile */
+        gap: 10px;
     }
 
     .container {
-        padding: 0;
-        /* Full width on mobile */
+        padding: 0 10px;
+        /* Slight padding */
+    }
+
+    .gallery-item {
+        padding-top: 100%;
+        /* Keep 1:1 aspect ratio */
+        border-radius: 8px;
+        /* Rounded corners for card look */
+        overflow: hidden;
     }
 
     .tags-filter {
-        padding: 10px 15px;
-        /* Add padding since container lost it */
+        padding: 10px 0;
     }
 }
 
