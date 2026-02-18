@@ -177,7 +177,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                 
                                 <div class="container" style="padding-bottom:50px;">
                                     <template x-for="img in images" :key="img.id">
-                                        <div :id="'feed-item-'+img.id" class="feed-item" x-data="{ localTag: '' }">
+                                        <div :id="'feed-item-'+img.id" class="feed-item">
                                             <div style="padding:10px; display:flex; align-items:center;">
                                                 <div style="font-weight:600; font-size:14px;" x-text="'Image #' + img.id"></div>
                                             </div>
@@ -201,10 +201,10 @@ fun Route.origami(origamiService: OrigamiService) {
                                                     <div x-show="!img.tags || img.tags.length===0" style="color:#8e8e8e; font-size:12px;">No tags yet</div>
                                                  </div>
 
-                                                 <form @submit.prevent="addTag(img, localTag); localTag=''">
-                                                     <input x-model="localTag" :id="'tag-input-'+img.id" placeholder="Add a tag..." 
+                                                 <form @submit.prevent="addTag(img, newTags[img.id]); newTags[img.id]=''">
+                                                     <input x-model="newTags[img.id]" :id="'tag-input-'+img.id" placeholder="Add a tag..." 
                                                             style="width:100%; border:none; outline:none; font-size:14px; padding:5px 0;">
-                                                     <button type="submit" x-show="localTag" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
+                                                     <button type="submit" x-show="newTags[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
                                                  </form>
                                             </div>
                                         </div>
@@ -226,6 +226,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                     limit: 20,
                                     loading: false,
                                     ended: false,
+                                    newTags: {},
                                     currentTag: '${selectedTag ?: ""}',
                                     
                                     init() {
