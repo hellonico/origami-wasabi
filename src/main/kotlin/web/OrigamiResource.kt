@@ -264,18 +264,18 @@ fun Route.origami(origamiService: OrigamiService) {
 
                             <!-- Grid View (Gallery) -->
                             <div class="container" x-show="!feedMode">
-                                <!-- Tags & Sort Filter -->
-                                <div class="tags-filter" style="margin-bottom:10px;">
-                                    <div style="margin-bottom:5px;">
-                                        <a href="/origami/view" class="tag-pill ${if(sortBy == "id") "active" else ""}">Newest</a>
-                                        <a href="/origami/view?sort=recent" class="tag-pill ${if(sortBy == "recent") "active" else ""}">Recent Activity</a>
-                                    </div>
-                                    <div>
-                                        <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
-                                        ${allTags.joinToString("") { tag -> 
-                                            "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
-                                        }}
-                                    </div>
+                                <!-- Sort Filter -->
+                                <div class="tags-filter" style="margin-bottom:5px;">
+                                    <a href="/origami/view" class="tag-pill ${if(sortBy == "id") "active" else ""}">Newest</a>
+                                    <a href="/origami/view?sort=recent" class="tag-pill ${if(sortBy == "recent") "active" else ""}">Recent Activity</a>
+                                </div>
+                                
+                                <!-- Tags Filter -->
+                                <div class="tags-filter" style="margin-bottom:20px;">
+                                    <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
+                                    ${allTags.joinToString("") { tag -> 
+                                        "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
+                                    }}
                                 </div>
 
                                 <!-- Gallery Grid -->
