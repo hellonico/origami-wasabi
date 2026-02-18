@@ -26,6 +26,7 @@ class OrigamiService {
             key = (Origamis.insert {
                 it[hash] = origami.hash
                 it[date] = System.currentTimeMillis()
+                it[tags] = origami.tags
             } get Origamis.id)
         }
         return getOrigami(key)!!
@@ -35,7 +36,8 @@ class OrigamiService {
         Origami(
             id = row[Origamis.id],
             hash = row[Origamis.hash],
-            date = row[Origamis.date]
+            date = row[Origamis.date],
+            tags = row[Origamis.tags]
         )
 
     suspend fun getAll(): List<Origami> = dbQuery {

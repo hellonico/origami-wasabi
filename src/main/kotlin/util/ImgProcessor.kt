@@ -19,11 +19,14 @@ class ImgProcessor {
     ): List<Int> {
         val parts: List<PartData> = multipart.readAllParts()
         val filter = loadFilter(parts)
+        val tagsPart = parts.find { it.name == "tags" && it is PartData.FormItem } as? PartData.FormItem
+        val tags = tagsPart?.value ?: ""
+
         val result : ArrayList<Int> = arrayListOf<Int>()
 
         for (part in parts) {
             println("Part: ${part.name} -> ${part.contentType}")
-            if(part.name=="filter") continue
+            if(part.name == "filter" || part.name == "tags") continue
             when (part) {
                 is PartData.FileItem -> {
                     val imgfile = createTempFile("tmp_", ".jpg")
@@ -39,7 +42,7 @@ class ImgProcessor {
                     val mat = Imgcodecs.imread(fileIn.absolutePath)
                     val out: Mat = filter.apply(mat)
                     Imgcodecs.imwrite(fileOut.absolutePath, out)
-                    origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis()))
+                    origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis(), tags = tags))
                     result.add(hash)
                 }
                 else -> {}

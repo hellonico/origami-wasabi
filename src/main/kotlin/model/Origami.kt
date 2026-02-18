@@ -9,6 +9,7 @@ object Origamis : Table() {
     val id = integer("id").autoIncrement()
     val hash = integer("hash")
     val date = long("date")
+    val tags = varchar("tags", 255).default("")
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -16,5 +17,6 @@ object Origamis : Table() {
 data class Origami(
     val id: Int,
     val hash: Int,
-    val date: Long
+    val date: Long,
+    val tags: String
 )
