@@ -87,6 +87,17 @@ class ImgProcessor {
     }
 
     private fun loadFilter(parts: List<PartData>): Filter {
+        val filterClassPart = parts.find { it.name == "filterClass" && it is PartData.FormItem } as? PartData.FormItem
+        if (filterClassPart != null && filterClassPart.value.isNotBlank()) {
+            try {
+                val className = filterClassPart.value
+                val clazz = Class.forName(className)
+                return clazz.newInstance() as Filter
+            } catch(e: Exception) {
+                println("Failed to load filter class: ${e.message}")
+            }
+        }
+
         val filterPart = parts.filter { it.name == "filter" }.toList()
         if (filterPart.size == 0) {
             return Filters.NoOP();

@@ -37,15 +37,40 @@
                 files1: null, 
                 files2: null, 
                 preview: null,
+                allFilters: [],
+                filterMode: 'list', // 'list' or 'file'
+                selectedFilter: '',
+                
+                init() {
+                    fetch('/origami/filters')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.allFilters = data.sort();
+                        })
+                        .catch(e => console.error('Error fetching filters:', e));
+                },
+
                 async updatePreview() {
-                     if (this.files1 && this.files1.length > 0 && this.files2 && this.files2.length > 0) {
-                         // Both image and filter present: fetch filtered preview
-                         let formData = new FormData();
-                         formData.append('customFile', this.files1[0]);
+                     if (!this.files1 || this.files1.length === 0) {
+                         this.preview = null;
+                         return;
+                     }
+
+                     let formData = new FormData();
+                     formData.append('customFile', this.files1[0]);
+                     
+                     let hasFilter = false;
+                     
+                     if(this.filterMode === 'file' && this.files2 && this.files2.length > 0) {
                          formData.append('filter', this.files2[0]);
-                         
-                         // Show loading or keep old preview? Maybe opacity?
-                         // For now just wait.
+                         hasFilter = true;
+                     } else if(this.filterMode === 'list' && this.selectedFilter) {
+                         formData.append('filterClass', this.selectedFilter);
+                         hasFilter = true;
+                     }
+
+                     if (hasFilter) {
+                         // Filtered Preview
                          try {
                              let res = await fetch('/origami/preview', {
                                  method: 'POST',
@@ -56,17 +81,16 @@
                                  this.preview = URL.createObjectURL(blob);
                              }
                          } catch(e) { console.error(e); }
-                     } else if (this.files1 && this.files1.length > 0) {
-                         // Only image: show local preview
+                     } else {
+                         // Local Preview
                          let reader = new FileReader();
                          reader.onload = (e) => { this.preview = e.target.result; };
                          reader.readAsDataURL(this.files1[0]);
-                     } else {
-                         this.preview = null;
                      }
                 }
-            }">
+            }" x-init="init()">
 
+                <!-- Image Drop Zone -->
                 <div style="border: 2px dashed #dbdbdb; min-height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative; overflow: hidden;"
                     class="hover:border-gray-400 transition">
                     <input name="customFile" type="file" id="customFile"
@@ -86,15 +110,42 @@
                     </div>
                 </div>
 
-                <div class="mb-3" style="text-align: left; margin-bottom:15px;">
+                <!-- Filter Selection -->
+                <div class="mb-4" style="text-align: left;">
                     <label
-                        style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Filter
-                        (Optional)</label>
-                    <input name="filter" type="file"
-                        x-on:change="files2 = Object.values($event.target.files); updatePreview()"
-                        style="width:100%; padding:8px; border:1px solid #dbdbdb; background:#fafafa; border-radius:3px;">
+                        style="display:block; font-weight:600; font-size:14px; margin-bottom:10px; color:#262626;">Filter
+                        Effect</label>
+
+                    <div style="display:flex; margin-bottom:10px; font-size:14px;">
+                        <label style="margin-right:15px; cursor:pointer;">
+                            <input type="radio" x-model="filterMode" value="list" @change="updatePreview()"> Select
+                            Filter
+                        </label>
+                        <label style="cursor:pointer;">
+                            <input type="radio" x-model="filterMode" value="file" @change="updatePreview()"> Upload EDN
+                        </label>
+                    </div>
+
+                    <!-- Built-in Filter List -->
+                    <div x-show="filterMode === 'list'">
+                        <select name="filterClass" x-model="selectedFilter" @change="updatePreview()"
+                            style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 3px; outline:none;">
+                            <option value="">No Filter (Original)</option>
+                            <template x-for="f in allFilters" :key="f">
+                                <option :value="f" x-text="f.split('.').pop()"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- Filter File Upload -->
+                    <div x-show="filterMode === 'file'">
+                        <input name="filter" type="file"
+                            x-on:change="files2 = Object.values($event.target.files); updatePreview()"
+                            style="width:100%; padding:8px; border:1px solid #dbdbdb; background:#fafafa; border-radius:3px;">
+                    </div>
                 </div>
 
+                <!-- Tags -->
                 <div class="mb-4" style="text-align: left; margin-bottom:20px;">
                     <label
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>

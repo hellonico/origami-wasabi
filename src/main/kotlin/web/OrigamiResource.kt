@@ -41,6 +41,14 @@ fun Route.origami(origamiService: OrigamiService) {
             call.respond(origamiService.getAll())
         }
 
+        get("/filters") {
+            try {
+                call.respond(origami.FindFilters.findFilters())
+            } catch(e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, e.message ?: "Error")
+            }
+        }
+
         get("/json/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if(id != null) {
