@@ -13,6 +13,7 @@ object Origamis : Table() {
     val likes = integer("likes").default(0)
     val comments = text("comments").default("[]")
     val lastUpdated = long("last_updated").default(System.currentTimeMillis())
+    val shares = integer("shares").default(0)
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -24,5 +25,6 @@ data class Origami(
     val tags: String,
     val likes: Int = 0,
     val comments: String = "[]",
-    val lastUpdated: Long = 0
+    val lastUpdated: Long = 0,
+    val shares: Int = 0
 )

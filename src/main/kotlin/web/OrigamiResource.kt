@@ -127,6 +127,22 @@ fun Route.origami(origamiService: OrigamiService) {
              }
         }
 
+        post("/{id}/share") {
+             val id = call.parameters["id"]?.toIntOrNull()
+             if (id != null) {
+                 val o = origamiService.getOrigami(id)
+                 if (o != null) {
+                     val newShares = o.shares + 1
+                     origamiService.updateShares(id, newShares)
+                     call.respond(HttpStatusCode.OK, mapOf("shares" to newShares))
+                 } else {
+                     call.respond(HttpStatusCode.NotFound)
+                 }
+             } else {
+                 call.respond(HttpStatusCode.BadRequest)
+             }
+        }
+
         post("/{id}/comment") {
             try {
                 val id = call.parameters["id"]?.toIntOrNull()
@@ -311,10 +327,20 @@ fun Route.origami(origamiService: OrigamiService) {
                                             
                                             <div class="feed-actions">
                                                  <div style="margin-bottom:12px; display:flex; align-items:center;">
-                                                    <i class="fa-heart fa-lg" :class="liked[img.id] ? 'fas text-red-500' : 'far'" 
-                                                       style="margin-right:20px; cursor:pointer; color: #ed4956;" @click="toggleLike(img)"></i>
-                                                    <i class="far fa-comment fa-lg" style="margin-right:20px; cursor:pointer;" @click="document.getElementById('comment-input-'+img.id).focus()"></i>
-                                                    <i class="far fa-paper-plane fa-lg" style="cursor:pointer;" @click="shareImage(img)"></i>
+                                                    <div style="display:flex; align-items:center; margin-right:20px;">
+                                                        <i class="fa-heart fa-lg" :class="liked[img.id] ? 'fas text-red-500' : 'far'" 
+                                                           style="cursor:pointer; color: #ed4956; margin-right: 5px;" @click="toggleLike(img)"></i>
+                                                    </div>
+                                                    
+                                                    <div style="display:flex; align-items:center; margin-right:20px;">
+                                                        <i class="far fa-comment fa-lg" style="cursor:pointer; margin-right: 5px;" @click="document.getElementById('comment-input-'+img.id).focus()"></i>
+                                                        <span x-text="parseComments(img.comments).length || ''" style="font-weight:600; font-size: 14px;"></span>
+                                                    </div>
+
+                                                    <div style="display:flex; align-items:center;">
+                                                        <i class="far fa-paper-plane fa-lg" style="cursor:pointer; margin-right: 5px;" @click="shareImage(img)"></i>
+                                                        <span x-text="img.shares || ''" style="font-weight:600; font-size: 14px;"></span>
+                                                    </div>
                                                  </div>
                                                  
                                                  <div style="font-weight:600; font-size:14px; margin-bottom:8px;" x-show="img.likes > 0">
@@ -342,7 +368,10 @@ fun Route.origami(origamiService: OrigamiService) {
                                                  <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''" style="display:flex; align-items:center;">
                                                      <input x-model="newComments[img.id]" :id="'comment-input-'+img.id" placeholder="Add a comment..." 
                                                             style="flex:1; border:none; outline:none; font-size:14px; padding:5px 0;">
-                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer; margin-left:10px;">Post</button>
+                                                     <button type="submit" x-show="newComments[img.id]" 
+                                                             style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer; margin-left:10px;"
+                                                             :style="{opacity: newComments[img.id] ? '1' : '0.3'}"
+                                                             x-bind:disabled="!newComments[img.id]">Post</button>
                                                  </form>
                                             </div>
                                         </div>
@@ -495,17 +524,41 @@ fun Route.origami(origamiService: OrigamiService) {
                                         }
                                     },
                                     
-                                    shareImage(img) {
+                                    async shareImage(img) {
                                         let url = window.location.origin + '/origami/view?id=' + img.id;
+                                        
+                                        // Update Share Count (Optimistic)
+                                        img.shares = (img.shares || 0) + 1;
+                                        fetch('/origami/' + img.id + '/share', { method: 'POST' }).catch(e=>console.log(e));
+
                                         if (navigator.share) {
-                                            navigator.share({
-                                                title: 'Wasabi Photo',
-                                                text: 'Check out this photo on Wasabi!',
-                                                url: url,
-                                            }).catch((error) => console.log('Error sharing', error));
+                                            try {
+                                                await navigator.share({
+                                                    title: 'Wasabi Photo',
+                                                    text: 'Check out this photo on Wasabi!',
+                                                    url: url,
+                                                });
+                                            } catch (error) { console.log('Error sharing', error); }
                                         } else {
-                                            prompt("Copy link to share:", url);
+                                            this.copyToClipboard(url);
                                         }
+                                    },
+
+                                    copyToClipboard(text) {
+                                        let textArea = document.createElement("textarea");
+                                        textArea.value = text;
+                                        textArea.style.position = "fixed";
+                                        textArea.style.left = "-9999px";
+                                        document.body.appendChild(textArea);
+                                        textArea.focus();
+                                        textArea.select();
+                                        try {
+                                            document.execCommand('copy');
+                                            alert("Link copied to clipboard!");
+                                        } catch (err) {
+                                            prompt("Copy link to share:", text);
+                                        }
+                                        document.body.removeChild(textArea);
                                     }
                                 }
                             }

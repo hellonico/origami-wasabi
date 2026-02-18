@@ -28,6 +28,7 @@ class OrigamiService {
                 it[date] = System.currentTimeMillis()
                 it[tags] = origami.tags
                 it[likes] = 0
+                it[shares] = 0
                 it[comments] = "[]"
                 it[lastUpdated] = System.currentTimeMillis()
             } get Origamis.id)
@@ -43,7 +44,8 @@ class OrigamiService {
             tags = row[Origamis.tags],
             likes = row[Origamis.likes],
             comments = row[Origamis.comments],
-            lastUpdated = row[Origamis.lastUpdated]
+            lastUpdated = row[Origamis.lastUpdated],
+            shares = row[Origamis.shares]
         )
 
     suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null, sortBy: String = "id"): List<Origami> = dbQuery {
@@ -84,6 +86,13 @@ class OrigamiService {
     suspend fun updateLikes(id: Int, count: Int) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
             it[likes] = count
+            it[lastUpdated] = System.currentTimeMillis()
+        }
+    }
+
+    suspend fun updateShares(id: Int, count: Int) = dbQuery {
+        Origamis.update({ Origamis.id eq id }) {
+            it[shares] = count
             it[lastUpdated] = System.currentTimeMillis()
         }
     }
