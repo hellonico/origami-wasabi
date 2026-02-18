@@ -6,18 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Wasabi - Share Photos</title>
 
-    <!-- Alpine.js -->
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.2/dist/alpine.min.js"></script>
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-    <!-- Grand Hotel Font -->
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
-    <!-- Custom Style -->
     <link href="/static/style.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100">
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-content">
             <div class="logo">Wasabi</div>
@@ -38,8 +33,10 @@
                 files2: null, 
                 preview: null,
                 allFilters: [],
-                filterMode: 'list', // 'list' or 'file'
+                filterMode: 'list', 
                 selectedFilter: '',
+                hoveredFilter: null,
+                debounceTimer: null,
                 
                 init() {
                     fetch('/origami/filters')
@@ -50,7 +47,12 @@
                         .catch(e => console.error('Error fetching filters:', e));
                 },
 
-                async updatePreview() {
+                updatePreview(debounceMs = 0) {
+                     if (this.debounceTimer) clearTimeout(this.debounceTimer);
+                     this.debounceTimer = setTimeout(() => this._doUpdatePreview(), debounceMs);
+                },
+
+                async _doUpdatePreview() {
                      if (!this.files1 || this.files1.length === 0) {
                          this.preview = null;
                          return;
@@ -60,17 +62,18 @@
                      formData.append('customFile', this.files1[0]);
                      
                      let hasFilter = false;
+                     // Logic: If hovering (not null), use hover. Else use selected.
+                     let activeFilter = (this.hoveredFilter !== null) ? this.hoveredFilter : this.selectedFilter;
                      
                      if(this.filterMode === 'file' && this.files2 && this.files2.length > 0) {
                          formData.append('filter', this.files2[0]);
                          hasFilter = true;
-                     } else if(this.filterMode === 'list' && this.selectedFilter) {
-                         formData.append('filterClass', this.selectedFilter);
+                     } else if(this.filterMode === 'list' && activeFilter) {
+                         formData.append('filterClass', activeFilter);
                          hasFilter = true;
                      }
 
                      if (hasFilter) {
-                         // Filtered Preview
                          try {
                              let res = await fetch('/origami/preview', {
                                  method: 'POST',
@@ -82,7 +85,6 @@
                              }
                          } catch(e) { console.error(e); }
                      } else {
-                         // Local Preview
                          let reader = new FileReader();
                          reader.onload = (e) => { this.preview = e.target.result; };
                          reader.readAsDataURL(this.files1[0]);
@@ -90,9 +92,9 @@
                 }
             }" x-init="init()">
 
-                <!-- Image Drop Zone -->
                 <div style="border: 2px dashed #dbdbdb; min-height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative; overflow: hidden;"
-                    class="hover:border-gray-400 transition">
+                    class="hover:border-gray-400 transition"
+                    :style="(hoveredFilter !== null) ? 'border-color: #0095f6;' : ''">
                     <input name="customFile" type="file" id="customFile"
                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         x-on:change="files1 = Object.values($event.target.files); updatePreview()"
@@ -108,36 +110,49 @@
                         style="display:none; width:100%; height:100%; position: absolute; top:0; left:0;">
                         <img :src="preview" style="width:100%; height:100%; object-fit: cover;">
                     </div>
+
+                    <div x-show="hoveredFilter !== null"
+                        style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:white; padding:4px 8px; border-radius:4px; font-size:12px; pointer-events:none;">
+                        Preview: <span x-text="hoveredFilter ? hoveredFilter.split('.').pop() : 'Normal'"></span>
+                    </div>
                 </div>
 
-                <!-- Filter Selection -->
                 <div class="mb-4" style="text-align: left;">
-                    <label
-                        style="display:block; font-weight:600; font-size:14px; margin-bottom:10px; color:#262626;">Filter
-                        Effect</label>
 
-                    <div style="display:flex; margin-bottom:10px; font-size:14px;">
-                        <label style="margin-right:15px; cursor:pointer;">
-                            <input type="radio" x-model="filterMode" value="list" @change="updatePreview()"> Select
-                            Filter
-                        </label>
-                        <label style="cursor:pointer;">
-                            <input type="radio" x-model="filterMode" value="file" @change="updatePreview()"> Upload EDN
-                        </label>
+                    <div
+                        style="display:flex; justify-content: space-between; align-items:center; margin-bottom:10px; font-size:14px;">
+                        <label style="font-weight:600; color:#262626;">Filter Effect</label>
+                        <div>
+                            <label style="margin-right:10px; cursor:pointer;">
+                                <input type="radio" x-model="filterMode" value="list" @change="updatePreview()"> List
+                            </label>
+                            <label style="cursor:pointer;">
+                                <input type="radio" x-model="filterMode" value="file" @change="updatePreview()"> Upload
+                            </label>
+                        </div>
                     </div>
 
-                    <!-- Built-in Filter List -->
                     <div x-show="filterMode === 'list'">
-                        <select name="filterClass" x-model="selectedFilter" @change="updatePreview()"
-                            style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 3px; outline:none;">
-                            <option value="">No Filter (Original)</option>
+                        <div class="filter-bar" @mouseleave="hoveredFilter = null; updatePreview(300)">
+                            <!-- Normal Option -->
+                            <div class="filter-chip" :class="{'active': !selectedFilter}"
+                                @click="selectedFilter = ''; updatePreview()"
+                                @mouseenter="hoveredFilter = ''; updatePreview(200)">
+                                Normal
+                            </div>
+
+                            <!-- Dynamic Filters -->
                             <template x-for="f in allFilters" :key="f">
-                                <option :value="f" x-text="f.split('.').pop()"></option>
+                                <div class="filter-chip" :class="{'active': selectedFilter === f}"
+                                    @click="selectedFilter = f; updatePreview()"
+                                    @mouseenter="hoveredFilter = f; updatePreview(200)">
+                                    <span x-text="f.split('.').pop()"></span>
+                                </div>
                             </template>
-                        </select>
+                        </div>
+                        <input type="hidden" name="filterClass" :value="selectedFilter">
                     </div>
 
-                    <!-- Filter File Upload -->
                     <div x-show="filterMode === 'file'">
                         <input name="filter" type="file"
                             x-on:change="files2 = Object.values($event.target.files); updatePreview()"
@@ -145,7 +160,6 @@
                     </div>
                 </div>
 
-                <!-- Tags -->
                 <div class="mb-4" style="text-align: left; margin-bottom:20px;">
                     <label
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>
