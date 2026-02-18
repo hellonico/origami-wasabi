@@ -187,7 +187,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                             <div class="feed-actions">
                                                  <div style="margin-bottom:8px;">
                                                     <i class="far fa-heart fa-lg" style="margin-right:15px; cursor:pointer;"></i>
-                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="${'$'}refs.tagInput.focus()"></i>
+                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="document.getElementById('tag-input-'+img.id).focus()"></i>
                                                     <i class="far fa-paper-plane fa-lg" style="cursor:pointer;"></i>
                                                  </div>
                                                  
@@ -202,7 +202,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                                  </div>
 
                                                  <form @submit.prevent="addTag(img, localTag); localTag=''">
-                                                     <input x-model="localTag" x-ref="tagInput" placeholder="Add a tag..." 
+                                                     <input x-model="localTag" :id="'tag-input-'+img.id" placeholder="Add a tag..." 
                                                             style="width:100%; border:none; outline:none; font-size:14px; padding:5px 0;">
                                                      <button type="submit" x-show="localTag" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
                                                  </form>

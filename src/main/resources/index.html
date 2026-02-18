@@ -28,7 +28,7 @@
             style="background: white; border: 1px solid #dbdbdb; border-radius: 3px; padding: 40px; text-align: center;">
             <h2 style="font-weight: 300; margin-bottom: 20px; font-size: 24px; color:#262626;">Upload New Photo</h2>
 
-            <form enctype='multipart/form-data' method="POST" action="/origami/form" x-data="{ 
+            <form @submit.prevent="submitForm" x-data="{ 
                 files1: null, 
                 files2: null, 
                 preview: null,
@@ -37,6 +37,8 @@
                 selectedFilter: '',
                 hoveredFilter: null,
                 debounceTimer: null,
+                isSubmitting: false,
+                tags: '',
                 
                 init() {
                     fetch('/origami/filters')
@@ -89,6 +91,44 @@
                          reader.onload = (e) => { this.preview = e.target.result; };
                          reader.readAsDataURL(this.files1[0]);
                      }
+                },
+
+                async submitForm() {
+                    if (!this.files1 || this.files1.length === 0) {
+                        alert('Please select an image first.');
+                        return;
+                    }
+                    this.isSubmitting = true;
+
+                    let formData = new FormData();
+                    formData.append('customFile', this.files1[0]);
+                    
+                    if(this.filterMode === 'file' && this.files2 && this.files2.length > 0) {
+                        formData.append('filter', this.files2[0]);
+                    } else if(this.filterMode === 'list' && this.selectedFilter) {
+                        formData.append('filterClass', this.selectedFilter);
+                    }
+                    
+                    if(this.tags) {
+                        formData.append('tags', this.tags);
+                    }
+
+                    try {
+                        let res = await fetch('/origami/form', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if(res.ok || res.redirected) {
+                            window.location.href = '/origami/view';
+                        } else {
+                            alert('Upload failed. Please try again.');
+                        }
+                    } catch(e) {
+                         console.error(e);
+                         alert('An error occurred.');
+                    } finally {
+                        this.isSubmitting = false;
+                    }
                 }
             }" x-init="init()">
 
@@ -97,8 +137,7 @@
                     :style="(hoveredFilter !== null) ? 'border-color: #0095f6;' : ''">
                     <input name="customFile" type="file" id="customFile"
                         x-on:change="files1 = Object.values($event.target.files); updatePreview()"
-                        style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index: 10;"
-                        required>
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index: 10;">
 
                     <div x-show="!preview" style="text-align: center; padding: 40px;">
                         <i class="fas fa-image fa-3x" style="color:#dbdbdb; margin-bottom:10px;"></i>
@@ -149,7 +188,6 @@
                                 </div>
                             </template>
                         </div>
-                        <input type="hidden" name="filterClass" :value="selectedFilter">
                     </div>
 
                     <div x-show="filterMode === 'file'">
@@ -162,12 +200,15 @@
                 <div class="mb-4" style="text-align: left; margin-bottom:20px;">
                     <label
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>
-                    <input type="text" name="tags" placeholder="e.g. summer, beach (comma separated)"
+                    <input type="text" x-model="tags" placeholder="e.g. summer, beach (comma separated)"
                         style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 3px; outline:none;">
                 </div>
 
-                <button type="submit" class="upload-btn"
-                    style="width: 100%; padding: 10px; font-size: 14px;">Share</button>
+                <button type="submit" class="upload-btn" style="width: 100%; padding: 10px; font-size: 14px;"
+                    :disabled="isSubmitting || !files1">
+                    <span x-show="!isSubmitting">Share</span>
+                    <span x-show="isSubmitting"><i class="fas fa-spinner fa-spin"></i> Uploading...</span>
+                </button>
             </form>
         </div>
     </div>
