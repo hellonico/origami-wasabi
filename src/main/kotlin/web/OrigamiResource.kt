@@ -13,22 +13,14 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.Comment
 import model.Origamis
-import org.opencv.core.Mat
-import org.opencv.imgcodecs.Imgcodecs.imread
-import org.opencv.imgcodecs.Imgcodecs.imwrite
-import origami.Origami
-import service.OrigamiService
-import service.WidgetService
-import java.io.File
-import java.nio.file.Files
+import org.slf4j.LoggerFactory // Add logger
 
-import kotlinx.html.*
-import origami.Filter
-import origami.Filters
-
+// ... imports
 
 fun Route.origami(origamiService: OrigamiService) {
 
+    val log = LoggerFactory.getLogger("OrigamiWeb")
+    val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true; encodeDefaults = true }
 
     static("out") {
         files("out")
@@ -93,14 +85,18 @@ fun Route.origami(origamiService: OrigamiService) {
                 val o = origamiService.getOrigami(id)
                 if (o != null) {
                     val currentComments: MutableList<Comment> = try {
-                        Json.decodeFromString(o.comments)
-                    } catch(e: Exception) { mutableListOf() }
+                        lenientJson.decodeFromString(o.comments)
+                    } catch(e: Exception) { 
+                        log.error("Failed to parse comments: ${e.message}")
+                        mutableListOf() 
+                    }
                     
                     val newComment = Comment(text, System.currentTimeMillis())
                     currentComments.add(newComment)
                     
-                    val json = Json.encodeToString(currentComments)
+                    val json = lenientJson.encodeToString(currentComments)
                     origamiService.updateComments(id, json)
+                    log.info("Updated comments: $json")
                     
                     call.respond(HttpStatusCode.OK, mapOf("comments" to json))
                 } else {

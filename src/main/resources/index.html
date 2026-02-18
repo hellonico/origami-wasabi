@@ -171,7 +171,7 @@
                     </div>
                 </div>
 
-                <div class="mb-4" style="text-align: left;">
+                <div class="mb-4" style="text-align: left; position: relative; z-index: 20;">
 
                     <div
                         style="display:flex; justify-content: space-between; align-items:center; margin-bottom:10px; font-size:14px;">
@@ -213,7 +213,7 @@
                     </div>
                 </div>
 
-                <div class="mb-4" style="text-align: left; margin-bottom:20px;">
+                <div class="mb-4" style="text-align: left; margin-bottom:20px; position: relative; z-index: 20;">
                     <label
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>
                     <input type="text" x-model="tags" placeholder="e.g. summer, beach (comma separated)"
@@ -228,7 +228,8 @@
                     </div>
                 </div>
 
-                <button type="submit" class="upload-btn" style="width: 100%; padding: 10px; font-size: 14px;"
+                <button type="submit" class="upload-btn"
+                    style="width: 100%; padding: 10px; font-size: 14px; position: relative; z-index: 20;"
                     :disabled="isSubmitting || !files1">
                     <span x-show="!isSubmitting">Share</span>
                     <span x-show="isSubmitting"><i class="fas fa-spinner fa-spin"></i> Uploading...</span>
