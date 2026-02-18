@@ -168,7 +168,7 @@ fun Route.origami(origamiService: OrigamiService) {
                             </div>
 
                             <!-- Feed View (Full Screen) -->
-                            <div class="feed-view" x-show="feedMode" style="display:none;" @scroll="onFeedScroll($event)">
+                            <div class="feed-view" x-show="feedMode" style="display:none;" @scroll="onFeedScroll(${'$'}event)">
                                 <div class="feed-header">
                                     <div class="feed-close-btn" @click="closeFeed()"><i class="fas fa-chevron-left"></i></div>
                                     <div style="flex:1; text-align:center; font-weight:600; font-family:'Grand Hotel', cursive; font-size:24px;">Posts</div>
@@ -187,7 +187,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                             <div class="feed-actions">
                                                  <div style="margin-bottom:8px;">
                                                     <i class="far fa-heart fa-lg" style="margin-right:15px; cursor:pointer;"></i>
-                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="$refs.tagInput.focus()"></i>
+                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="${'$'}refs.tagInput.focus()"></i>
                                                     <i class="far fa-paper-plane fa-lg" style="cursor:pointer;"></i>
                                                  </div>
                                                  
