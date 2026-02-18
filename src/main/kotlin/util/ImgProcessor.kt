@@ -5,7 +5,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
 import org.opencv.core.MatOfInt
+import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs
+import org.opencv.imgproc.Imgproc
 import origami.Filter
 import origami.Filters
 import origami.Origami
@@ -31,7 +33,7 @@ class ImgProcessor {
             if(part.name == "filter" || part.name == "tags") continue
             when (part) {
                 is PartData.FileItem -> {
-                    val imgfile = createTempFile("tmp_", ".jpg")
+                    val imgfile = File.createTempFile("tmp_", ".jpg")
                     savePartToFile(part, imgfile)
                     val hash: Int = imgfile.absolutePath.hashCode()
                     val fileIn = File("out/${hash}.in.${imgfile.extension}")
@@ -72,10 +74,22 @@ class ImgProcessor {
 
         for (part in parts) {
             if(part.name == "customFile" && part is PartData.FileItem) {
-                val imgfile = createTempFile("tmp_preview_", ".jpg")
+                val imgfile = File.createTempFile("tmp_preview_", ".jpg")
                 savePartToFile(part, imgfile)
                 val mat = Imgcodecs.imread(imgfile.absolutePath)
-                val out: Mat = filter.apply(mat)
+                
+                // Resize for preview (Max width 800)
+                val previewMat = Mat()
+                val targetWidth = 800.0
+                if (mat.width() > targetWidth) {
+                    val ratio = targetWidth / mat.width()
+                    val newHeight = mat.height() * ratio
+                    Imgproc.resize(mat, previewMat, Size(targetWidth, newHeight))
+                } else {
+                    mat.copyTo(previewMat)
+                }
+                
+                val out: Mat = filter.apply(previewMat)
                 val buffer = org.opencv.core.MatOfByte()
                 Imgcodecs.imencode(".jpg", out, buffer)
                 result = buffer.toArray()
@@ -103,7 +117,7 @@ class ImgProcessor {
             return Filters.NoOP();
         } else {
             val part: PartData = filterPart[0]
-            val filterfile = createTempFile("tmp_", ".edn")
+            val filterfile = File.createTempFile("tmp_", ".edn")
             when (part) {
                 is PartData.FileItem -> {
                     savePartToFile(part, filterfile)
