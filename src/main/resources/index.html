@@ -4,79 +4,72 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Wasabi - Share Photos</title>
 
-    <title>Origami with Wasasbi</title>
-    <meta name="author" content="Nicolas Modrzyk">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/2.7.0/alpine.js"
-        type="application/javascript"></script>
-
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
-        integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
-        crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
-        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
-        crossorigin="anonymous"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-        }
-    </style>
-
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.2/dist/alpine.min.js"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <!-- Grand Hotel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link href="/static/style.css" rel="stylesheet">
 </head>
 
-<body>
-    <div class="container">
-        <div class="row">
-            <div class="col-4">
-                <img src="/static/wasabi.png" alt="wasabi" />
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">Wasabi</div>
+            <div class="act">
+                <a href="/origami/view" class="upload-btn"
+                    style="background:transparent; color:#262626; border:1px solid #dbdbdb;">Gallery</a>
             </div>
+        </div>
+    </nav>
 
-            <div class="col">
+    <div class="container" style="max-width: 600px;">
+        <div
+            style="background: white; border: 1px solid #dbdbdb; border-radius: 3px; padding: 40px; text-align: center;">
+            <h2 style="font-weight: 300; margin-bottom: 20px; font-size: 24px; color:#262626;">Upload New Photo</h2>
 
-                <h1 x-data="{ message: 'I ❤️ Wasabi' }" x-text="message"></h1>
-                <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Gallery</h2>
-                <a href="/origami/view">Link</a>
-                <!--            <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Curl</h2>-->
-                <!--            <pre><code>curl \-->
-                <!--  -F "data=@filter.edn" \-->
-                <!--  -F "data=@media.jpg" \-->
-                <!--  http://wasabi.hellonico.info/origami/image > hello.png</code></pre>-->
-                <h2 class="text-xl font-semibold text-gray-800 mt-8 mb-4">Upload</h2>
+            <form enctype='multipart/form-data' method="POST" action="/origami/form" x-data="{ files1: null }">
 
+                <div style="border: 2px dashed #dbdbdb; padding: 40px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative;"
+                    class="hover:border-gray-400 transition">
+                    <input name="customFile" type="file" id="customFile"
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        x-on:change="files1 = Object.values($event.target.files)"
+                        style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;"
+                        required>
+                    <div x-show="!files1">
+                        <i class="fas fa-image fa-3x" style="color:#dbdbdb; margin-bottom:10px;"></i>
+                        <p style="color:#8e8e8e;">Drag photos here or click to select</p>
+                    </div>
+                    <div x-show="files1" style="display:none;">
+                        <p x-text="files1 ? files1.map(file => file.name).join(', ') : ''"
+                            style="font-weight:600; color:#262626;"></p>
+                    </div>
+                </div>
 
-                <form enctype='multipart/form-data' method="POST" action="/origami/form" class="my-6"
-                    x-data="{ files1: null, files2 : null }">
-                    <input type="text" name="tags" placeholder="Tags (comma separated)"
-                        class="border-2 border-gray-200 p-3 w-full block rounded my-2">
+                <div class="mb-3" style="text-align: left; margin-bottom:15px;">
+                    <label
+                        style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Filter
+                        (Optional)</label>
+                    <input name="filter" type="file"
+                        style="width:100%; padding:8px; border:1px solid #dbdbdb; background:#fafafa; border-radius:3px;">
+                </div>
 
-                    <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
-                        for="customFile">
-                        <input name="customFile" type="file" class="sr-only" id="customFile" multiple="true"
-                            x-on:change="files1 = Object.values($event.target.files)">
-                        <span x-text="files1 ? files1.map(file => file.name).join(', ') : 'Choose image'"></span>
-                    </label>
-                    <label class="border-2 border-gray-200 p-3 w-full block rounded cursor-pointer my-2"
-                        for="customFile2">
-                        <input name="filter" type="file" class="sr-only" id="customFile2"
-                            x-on:change="files2 = Object.values($event.target.files)">
-                        <span x-text="files2 ? files2.map(file => file.name).join(', ') : 'Choose filter'"></span>
-                    </label>
-                    <button type="submit" class="bg-gray-300 text-gray-800 px-3 py-1 rounded">Submit</button>
-                </form>
+                <div class="mb-4" style="text-align: left; margin-bottom:20px;">
+                    <label
+                        style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Tags</label>
+                    <input type="text" name="tags" placeholder="e.g. summer, beach (comma separated)"
+                        style="width: 100%; padding: 10px; border: 1px solid #dbdbdb; background: #fafafa; border-radius: 3px; outline:none;">
+                </div>
 
-            </div>
+                <button type="submit" class="upload-btn"
+                    style="width: 100%; padding: 10px; font-size: 14px;">Share</button>
+            </form>
         </div>
     </div>
 </body>

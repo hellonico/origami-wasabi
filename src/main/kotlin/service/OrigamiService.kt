@@ -40,8 +40,11 @@ class OrigamiService {
             tags = row[Origamis.tags]
         )
 
-    suspend fun getAll(): List<Origami> = dbQuery {
-        Origamis.selectAll().map { toOrigami(it) }
+    suspend fun getAll(limit: Int = 100, offset: Long = 0): List<Origami> = dbQuery {
+        Origamis.selectAll()
+            .orderBy(Origamis.id to SortOrder.DESC)
+            .limit(limit, offset)
+            .map { toOrigami(it) }
     }
 
     suspend fun updateTags(id: Int, tags: String) = dbQuery {

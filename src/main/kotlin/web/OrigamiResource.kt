@@ -95,29 +95,22 @@ fun Route.origami(origamiService: OrigamiService) {
             call.respondRedirect("/origami/view")
         }
 
+        get("/list") {
+            val limit = call.parameters["limit"]?.toIntOrNull() ?: 20
+            val offset = call.parameters["offset"]?.toLongOrNull() ?: 0L
+            val list = origamiService.getAll(limit, offset)
+            call.respond(list)
+        }
+
         get("/view") {
             val name = "Wasabi Gallery"
-            val allOrigamis: List<model.Origami> = origamiService.getAll()
-            val selectedTag = call.parameters["tag"]
-
-            val allTags = allOrigamis.flatMap { it.tags.split(",") }
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .distinct()
-                .sorted()
-
-            val displayedOrigamis = if (selectedTag != null && selectedTag.isNotEmpty()) {
-                allOrigamis.filter { it.tags.split(",").map { t -> t.trim() }.contains(selectedTag) }
-            } else {
-                allOrigamis
-            }
-
-            val jsonOrigamis = util.JsonMapper.defaultMapper.encodeToString(displayedOrigamis)
+            //Initial load only first batch
+            val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0)
+            val jsonOrigamis = util.JsonMapper.defaultMapper.encodeToString(initialOrigamis)
 
             call.respondHtml {
                 head {
                     link(href = "/static/style.css", rel = "stylesheet")
-                    // Grand Hotel font for logo
                     link(href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap", rel="stylesheet")
                     link(href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css", rel="stylesheet")
                     script(src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.8.2/dist/alpine.min.js") {}
@@ -126,8 +119,7 @@ fun Route.origami(origamiService: OrigamiService) {
                 body {
                     unsafe {
                         +"""
-                        <div x-data="gallery()">
-                            <!-- Navbar -->
+                        <div x-data="gallery()" x-init="init()">
                             <nav class="navbar">
                                 <div class="nav-content">
                                     <div class="logo">Wasabi</div>
@@ -138,14 +130,6 @@ fun Route.origami(origamiService: OrigamiService) {
                             </nav>
 
                             <div class="container">
-                                <!-- Tags Filter -->
-                                <div class="tags-filter">
-                                    <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
-                                    ${allTags.joinToString("") { tag -> 
-                                        "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
-                                    }}
-                                </div>
-
                                 <!-- Gallery Grid -->
                                 <div class="gallery-grid">
                                     <template x-for="img in images" :key="img.id">
@@ -156,6 +140,9 @@ fun Route.origami(origamiService: OrigamiService) {
                                             </div>
                                         </div>
                                     </template>
+                                </div>
+                                <div x-show="loading" style="text-align:center; padding:20px;">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
                                 </div>
                             </div>
 
@@ -200,6 +187,32 @@ fun Route.origami(origamiService: OrigamiService) {
                                     images: $jsonOrigamis,
                                     selectedImage: null,
                                     newTag: '',
+                                    offset: 20,
+                                    limit: 20,
+                                    loading: false,
+                                    ended: false,
+                                    init() {
+                                        window.addEventListener('scroll', () => {
+                                            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                                                this.loadMore();
+                                            }
+                                        });
+                                    },
+                                    async loadMore() {
+                                        if(this.loading || this.ended) return;
+                                        this.loading = true;
+                                        let res = await fetch('/origami/list?limit=' + this.limit + '&offset=' + this.offset);
+                                        if(res.ok) {
+                                            let newImages = await res.json();
+                                            if(newImages.length > 0) {
+                                                this.images = this.images.concat(newImages);
+                                                this.offset += newImages.length;
+                                            } else {
+                                                this.ended = true;
+                                            }
+                                        }
+                                        this.loading = false;
+                                    },
                                     selectImage(img) { 
                                         this.selectedImage = img; 
                                         document.body.style.overflow = 'hidden';
@@ -223,10 +236,8 @@ fun Route.origami(origamiService: OrigamiService) {
 
                                         if(res.ok) {
                                             let data = await res.json();
-                                            // Update local state
                                             this.selectedImage.tags = data.tags;
                                             this.newTag = '';
-                                            // Find in list to update grid overlay count
                                             let idx = this.images.findIndex(i => i.id === id);
                                             if(idx > -1) this.images[idx].tags = data.tags;
                                         }
