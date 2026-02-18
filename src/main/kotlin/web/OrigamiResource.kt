@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.builtins.ListSerializer
 import model.Comment
 import model.Origamis
 import org.slf4j.LoggerFactory
@@ -136,8 +137,10 @@ fun Route.origami(origamiService: OrigamiService) {
                     val o = origamiService.getOrigami(id)
                     if (o != null) {
                         // Use explicit List<Comment> for serialization stability
+                        val commentSerializer = ListSerializer(Comment.serializer())
+                        
                         val currentList: List<Comment> = try {
-                            lenientJson.decodeFromString<List<Comment>>(o.comments)
+                            lenientJson.decodeFromString(commentSerializer, o.comments)
                         } catch(e: Exception) { 
                             log.error("Failed to parse comments: ${e.message}")
                             emptyList()
@@ -147,8 +150,8 @@ fun Route.origami(origamiService: OrigamiService) {
                         val newComment = Comment(text, System.currentTimeMillis())
                         mutableComments.add(newComment)
                         
-                        // Encode as List<Comment>
-                        val json = lenientJson.encodeToString(mutableComments)
+                        // Encode explicit
+                        val json = lenientJson.encodeToString(commentSerializer, mutableComments)
                         origamiService.updateComments(id, json)
                         log.info("Updated comments for $id: $json")
                         
@@ -227,7 +230,10 @@ fun Route.origami(origamiService: OrigamiService) {
 
             //Initial load only first batch
             val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0, selectedTag)
-            val jsonOrigamis = lenientJson.encodeToString(initialOrigamis)
+            
+            // Explicit serializer for list of Origamis
+            val origamiSerializer = ListSerializer(model.Origami.serializer())
+            val jsonOrigamis = lenientJson.encodeToString(origamiSerializer, initialOrigamis)
 
             call.respondHtml {
                 head {
