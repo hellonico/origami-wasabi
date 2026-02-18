@@ -40,11 +40,26 @@ class OrigamiService {
             tags = row[Origamis.tags]
         )
 
-    suspend fun getAll(limit: Int = 100, offset: Long = 0): List<Origami> = dbQuery {
-        Origamis.selectAll()
-            .orderBy(Origamis.id to SortOrder.DESC)
+    suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null): List<Origami> = dbQuery {
+        val query = if (tag != null && tag.isNotEmpty()) {
+            Origamis.select { Origamis.tags like "%$tag%" }
+        } else {
+            Origamis.selectAll()
+        }
+        
+        query.orderBy(Origamis.id to SortOrder.DESC)
             .limit(limit, offset)
             .map { toOrigami(it) }
+    }
+
+    suspend fun getAllTags(): List<String> = dbQuery {
+        Origamis.slice(Origamis.tags)
+            .selectAll()
+            .flatMap { it[Origamis.tags].split(",") }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .sorted()
     }
 
     suspend fun updateTags(id: Int, tags: String) = dbQuery {

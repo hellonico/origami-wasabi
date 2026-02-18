@@ -33,20 +33,45 @@
             style="background: white; border: 1px solid #dbdbdb; border-radius: 3px; padding: 40px; text-align: center;">
             <h2 style="font-weight: 300; margin-bottom: 20px; font-size: 24px; color:#262626;">Upload New Photo</h2>
 
-            <form enctype='multipart/form-data' method="POST" action="/origami/form"
-                x-data="{ files1: null, preview: null }">
+            <form enctype='multipart/form-data' method="POST" action="/origami/form" x-data="{ 
+                files1: null, 
+                files2: null, 
+                preview: null,
+                async updatePreview() {
+                     if (this.files1 && this.files1.length > 0 && this.files2 && this.files2.length > 0) {
+                         // Both image and filter present: fetch filtered preview
+                         let formData = new FormData();
+                         formData.append('customFile', this.files1[0]);
+                         formData.append('filter', this.files2[0]);
+                         
+                         // Show loading or keep old preview? Maybe opacity?
+                         // For now just wait.
+                         try {
+                             let res = await fetch('/origami/preview', {
+                                 method: 'POST',
+                                 body: formData
+                             });
+                             if (res.ok) {
+                                 let blob = await res.blob();
+                                 this.preview = URL.createObjectURL(blob);
+                             }
+                         } catch(e) { console.error(e); }
+                     } else if (this.files1 && this.files1.length > 0) {
+                         // Only image: show local preview
+                         let reader = new FileReader();
+                         reader.onload = (e) => { this.preview = e.target.result; };
+                         reader.readAsDataURL(this.files1[0]);
+                     } else {
+                         this.preview = null;
+                     }
+                }
+            }">
 
                 <div style="border: 2px dashed #dbdbdb; min-height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 20px; cursor: pointer; position:relative; overflow: hidden;"
                     class="hover:border-gray-400 transition">
                     <input name="customFile" type="file" id="customFile"
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" x-on:change="
-                                files1 = Object.values($event.target.files);
-                                if(files1.length > 0) {
-                                    let reader = new FileReader();
-                                    reader.onload = (e) => { preview = e.target.result; };
-                                    reader.readAsDataURL(files1[0]);
-                                }
-                           "
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        x-on:change="files1 = Object.values($event.target.files); updatePreview()"
                         style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index: 10;"
                         required>
 
@@ -66,6 +91,7 @@
                         style="display:block; font-weight:600; font-size:14px; margin-bottom:5px; color:#262626;">Filter
                         (Optional)</label>
                     <input name="filter" type="file"
+                        x-on:change="files2 = Object.values($event.target.files); updatePreview()"
                         style="width:100%; padding:8px; border:1px solid #dbdbdb; background:#fafafa; border-radius:3px;">
                 </div>
 

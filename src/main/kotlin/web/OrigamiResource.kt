@@ -98,14 +98,18 @@ fun Route.origami(origamiService: OrigamiService) {
         get("/list") {
             val limit = call.parameters["limit"]?.toIntOrNull() ?: 20
             val offset = call.parameters["offset"]?.toLongOrNull() ?: 0L
-            val list = origamiService.getAll(limit, offset)
+            val tag = call.parameters["tag"]
+            val list = origamiService.getAll(limit, offset, tag)
             call.respond(list)
         }
 
         get("/view") {
             val name = "Wasabi Gallery"
+            val selectedTag = call.parameters["tag"]
+            val allTags = origamiService.getAllTags()
+
             //Initial load only first batch
-            val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0)
+            val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0, selectedTag)
             val jsonOrigamis = util.JsonMapper.defaultMapper.encodeToString(initialOrigamis)
 
             call.respondHtml {
@@ -130,6 +134,14 @@ fun Route.origami(origamiService: OrigamiService) {
                             </nav>
 
                             <div class="container">
+                                <!-- Tags Filter -->
+                                <div class="tags-filter">
+                                    <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
+                                    ${allTags.joinToString("") { tag -> 
+                                        "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
+                                    }}
+                                </div>
+
                                 <!-- Gallery Grid -->
                                 <div class="gallery-grid">
                                     <template x-for="img in images" :key="img.id">
@@ -191,6 +203,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                     limit: 20,
                                     loading: false,
                                     ended: false,
+                                    currentTag: '${selectedTag ?: ""}',
                                     init() {
                                         window.addEventListener('scroll', () => {
                                             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
@@ -201,7 +214,10 @@ fun Route.origami(origamiService: OrigamiService) {
                                     async loadMore() {
                                         if(this.loading || this.ended) return;
                                         this.loading = true;
-                                        let res = await fetch('/origami/list?limit=' + this.limit + '&offset=' + this.offset);
+                                        let url = '/origami/list?limit=' + this.limit + '&offset=' + this.offset;
+                                        if(this.currentTag) url += '&tag=' + encodeURIComponent(this.currentTag);
+                                        
+                                        let res = await fetch(url);
                                         if(res.ok) {
                                             let newImages = await res.json();
                                             if(newImages.length > 0) {
@@ -236,8 +252,10 @@ fun Route.origami(origamiService: OrigamiService) {
 
                                         if(res.ok) {
                                             let data = await res.json();
+                                            // Update local state
                                             this.selectedImage.tags = data.tags;
                                             this.newTag = '';
+                                            // Find in list to update grid overlay count
                                             let idx = this.images.findIndex(i => i.id === id);
                                             if(idx > -1) this.images[idx].tags = data.tags;
                                         }
@@ -265,6 +283,16 @@ fun Route.origami(origamiService: OrigamiService) {
             }
         }
 
+        post("/preview") {
+            val multipart = call.receiveMultipart()
+            val result = util.ImgProcessor().processPreview(multipart)
+            if (result != null) {
+                call.respondBytes(result, ContentType.Image.JPEG)
+            } else {
+                call.respond(HttpStatusCode.BadRequest)
+            }
+        }
+
         post("/image") {
             val multipart = call.receiveMultipart()
             val processor = util.ImgProcessor()
@@ -286,5 +314,3 @@ fun Route.origami(origamiService: OrigamiService) {
 
 
 }
-
-

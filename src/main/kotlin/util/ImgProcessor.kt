@@ -3,6 +3,8 @@ package util
 import io.ktor.http.content.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
+import org.opencv.core.MatOfInt
 import org.opencv.imgcodecs.Imgcodecs
 import origami.Filter
 import origami.Filters
@@ -61,6 +63,27 @@ class ImgProcessor {
                 inputStream.copyTo(it)
             }
         }
+    }
+
+    suspend fun processPreview(multipart: MultiPartData): ByteArray? {
+        val parts: List<PartData> = multipart.readAllParts()
+        val filter = loadFilter(parts)
+        var result: ByteArray? = null
+
+        for (part in parts) {
+            if(part.name == "customFile" && part is PartData.FileItem) {
+                val imgfile = createTempFile("tmp_preview_", ".jpg")
+                savePartToFile(part, imgfile)
+                val mat = Imgcodecs.imread(imgfile.absolutePath)
+                val out: Mat = filter.apply(mat)
+                val buffer = org.opencv.core.MatOfByte()
+                Imgcodecs.imencode(".jpg", out, buffer)
+                result = buffer.toArray()
+                imgfile.delete()
+            }
+            part.dispose()
+        }
+        return result
     }
 
     private fun loadFilter(parts: List<PartData>): Filter {
