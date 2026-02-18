@@ -31,6 +31,7 @@ class ImgProcessor {
                     val hash: Int = imgfile.absolutePath.hashCode()
                     val fileIn = File("out/${hash}.in.${imgfile.extension}")
                     println("<< "+fileIn)
+                    fileIn.parentFile.mkdirs()
                     Files.move(imgfile.toPath(), fileIn.toPath())
                     val fileOut = File("out/${hash}.out.${imgfile.extension}")
                     println(">>"+ fileOut)
