@@ -13,9 +13,20 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.Comment
 import model.Origamis
-import org.slf4j.LoggerFactory // Add logger
+import org.slf4j.LoggerFactory
+import org.opencv.core.Mat
+import org.opencv.imgcodecs.Imgcodecs.imread
+import org.opencv.imgcodecs.Imgcodecs.imwrite
+import origami.Origami
+import service.OrigamiService
+import service.WidgetService
+import java.io.File
+import java.nio.file.Files
 
-// ... imports
+import kotlinx.html.*
+import origami.Filter
+import origami.Filters
+
 
 fun Route.origami(origamiService: OrigamiService) {
 
