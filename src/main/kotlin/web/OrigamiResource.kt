@@ -127,33 +127,42 @@ fun Route.origami(origamiService: OrigamiService) {
         }
 
         post("/{id}/comment") {
-            val id = call.parameters["id"]?.toIntOrNull()
-            val params = call.receiveParameters()
-            val text = params["text"]?.trim()
+            try {
+                val id = call.parameters["id"]?.toIntOrNull()
+                val params = call.receiveParameters()
+                val text = params["text"]?.trim()
 
-            if (id != null && !text.isNullOrBlank()) {
-                val o = origamiService.getOrigami(id)
-                if (o != null) {
-                    val currentComments: MutableList<Comment> = try {
-                        lenientJson.decodeFromString(o.comments)
-                    } catch(e: Exception) { 
-                        log.error("Failed to parse comments: ${e.message}")
-                        mutableListOf() 
+                if (id != null && !text.isNullOrBlank()) {
+                    val o = origamiService.getOrigami(id)
+                    if (o != null) {
+                        // Use explicit List<Comment> for serialization stability
+                        val currentList: List<Comment> = try {
+                            lenientJson.decodeFromString<List<Comment>>(o.comments)
+                        } catch(e: Exception) { 
+                            log.error("Failed to parse comments: ${e.message}")
+                            emptyList()
+                        }
+                        
+                        val mutableComments = currentList.toMutableList()
+                        val newComment = Comment(text, System.currentTimeMillis())
+                        mutableComments.add(newComment)
+                        
+                        // Encode as List<Comment>
+                        val json = lenientJson.encodeToString(mutableComments)
+                        origamiService.updateComments(id, json)
+                        log.info("Updated comments for $id: $json")
+                        
+                        call.respond(HttpStatusCode.OK, mapOf("comments" to json))
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
                     }
-                    
-                    val newComment = Comment(text, System.currentTimeMillis())
-                    currentComments.add(newComment)
-                    
-                    val json = lenientJson.encodeToString(currentComments)
-                    origamiService.updateComments(id, json)
-                    log.info("Updated comments: $json")
-                    
-                    call.respond(HttpStatusCode.OK, mapOf("comments" to json))
                 } else {
-                    call.respond(HttpStatusCode.NotFound)
+                    call.respond(HttpStatusCode.BadRequest, "Missing id or text")
                 }
-            } else {
-                call.respond(HttpStatusCode.BadRequest)
+            } catch (e: Exception) {
+                log.error("Error posting comment", e)
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
             }
         }
 
