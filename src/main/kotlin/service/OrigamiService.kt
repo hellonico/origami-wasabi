@@ -42,6 +42,12 @@ class OrigamiService {
 
     suspend fun getAll(): List<Origami> = dbQuery {
         Origamis.selectAll().map { toOrigami(it) }
+        suspend fun updateTags(id: Int, tags: String) = dbQuery {
+        Origamis.update({ Origamis.id eq id }) {
+            it[Origamis.tags] = tags
+        }
     }
+
+}
 
 }
