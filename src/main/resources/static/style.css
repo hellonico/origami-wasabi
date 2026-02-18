@@ -165,16 +165,17 @@ body {
     background: #fafafa;
 }
 
+/* Feed Actions - RESET display to block for vertical stacking */
 .feed-actions {
-    padding: 12px 15px;
-    display: flex;
-    align-items: center;
+    padding: 10px 15px;
+    display: block;
+    /* Vertical stacking of rows */
 }
 
 /* Default Feed Icons */
 .feed-actions i {
-    font-size: 26px !important;
-    margin-right: 24px !important;
+    font-size: 24px !important;
+    margin-right: 20px !important;
     padding: 5px;
     cursor: pointer;
 }
@@ -225,20 +226,18 @@ body {
 /* ----- MOBILE OPTIMIZATIONS ----- */
 @media (max-width: 736px) {
 
-    /* Navbar Scaling */
+    /* Navbar Scaling - Moderate */
     .navbar {
-        padding: 20px 15px;
-        /* Taller */
+        padding: 12px 15px;
     }
 
     .logo {
-        font-size: 40px;
-        /* Bigger Logo */
+        font-size: 28px;
     }
 
     .upload-btn {
-        padding: 12px 24px;
-        font-size: 16px;
+        padding: 8px 16px;
+        font-size: 15px;
     }
 
     /* Grid to Feed Conversion */
@@ -250,7 +249,6 @@ body {
 
     .container {
         padding: 0;
-        /* Edge to edge */
     }
 
     .gallery-item {
@@ -260,37 +258,34 @@ body {
 
     /* Feed View Scaling */
     .feed-header {
-        height: 70px;
-        font-size: 20px;
+        height: 50px;
+        /* Reduced from 70px */
+        font-size: 18px;
     }
 
     .feed-view {
-        padding-top: 70px;
+        padding-top: 50px;
     }
 
     .feed-close-btn {
-        font-size: 32px;
-        /* Easy to tap close */
-        padding: 15px;
+        font-size: 24px;
+        padding: 12px;
     }
 
-    /* Bigger Icons */
+    /* Icons - Balanced */
     .feed-actions {
-        padding: 15px;
-        justify-content: flex-start;
-        /* Ensure left align */
+        padding: 10px 15px;
     }
 
     .feed-actions i {
-        font-size: 32px !important;
-        /* Huge icons for mobile */
-        margin-right: 32px !important;
-        /* Proper spacing */
+        font-size: 28px !important;
+        /* Touch friendly but not huge */
+        margin-right: 24px !important;
     }
 
     /* Touch Friendly Comments */
     .comments-list {
-        font-size: 15px !important;
+        font-size: 14px !important;
         line-height: 1.4;
     }
 
@@ -303,20 +298,19 @@ body {
 
     /* Comment Input Area */
     form[style*="padding: 0 15px;"] {
-        padding: 10px 15px !important;
-        /* background: #f9f9f9; */
+        padding: 8px 15px !important;
     }
 
-    /* Make input taller */
+    /* Make input standard size */
     input[placeholder="Add a comment..."] {
-        padding: 15px 0 !important;
-        height: 50px;
+        padding: 10px 0 !important;
+        height: auto;
     }
 
-    /* Tag pills bigger */
+    /* Tag pills */
     .tag-pill,
     .filter-chip {
-        padding: 10px 20px;
-        font-size: 16px;
+        padding: 8px 16px;
+        font-size: 14px;
     }
 }
