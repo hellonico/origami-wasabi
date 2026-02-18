@@ -183,6 +183,7 @@ fun Route.origami(origamiService: OrigamiService) {
 
             call.respondHtml {
                 head {
+                    meta(name = "viewport", content = "width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover")
                     link(href = "/static/style.css", rel = "stylesheet")
                     link(href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap", rel="stylesheet")
                     link(href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css", rel="stylesheet")
