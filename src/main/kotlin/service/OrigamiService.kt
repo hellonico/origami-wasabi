@@ -68,10 +68,12 @@ class OrigamiService {
             .map { toOrigami(it) }
     }
 
-    suspend fun getAllTags(): List<String> = dbQuery {
-        Origamis.slice(Origamis.tags)
-            .selectAll()
-            .flatMap { it[Origamis.tags].split(",") }
+    suspend fun getAllTags(workspaceId: String = "default"): List<String> = dbQuery {
+        val allTags = Origamis.slice(Origamis.tags)
+            .select { Origamis.workspaceId eq workspaceId }
+            .map { it[Origamis.tags] }
+        
+        allTags.flatMap { it.split(",") }
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .distinct()
@@ -104,6 +106,19 @@ class OrigamiService {
             it[Origamis.comments] = json
             it[lastUpdated] = System.currentTimeMillis()
         }
+    }
+
+    suspend fun getStats(): Map<String, Long> = dbQuery {
+        val count = Origamis.id.count()
+        Origamis.slice(Origamis.workspaceId, count)
+            .selectAll()
+            .groupBy(Origamis.workspaceId)
+            .map { 
+                val ws = it[Origamis.workspaceId]
+                val cnt = it[count]
+                ws to cnt 
+            }
+            .toMap()
     }
 
 }
