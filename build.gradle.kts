@@ -45,7 +45,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCpVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("origami:filters:1.48")
+    implementation("origami:filters:1.49")
     implementation("origami:origami:4.13.0-2-SNAPSHOT")
     implementation("org.clojure:clojure:1.11.3")
 
