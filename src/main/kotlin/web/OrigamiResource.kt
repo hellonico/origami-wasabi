@@ -219,17 +219,20 @@ fun Route.origami(origamiService: OrigamiService) {
             val limit = call.parameters["limit"]?.toIntOrNull() ?: 20
             val offset = call.parameters["offset"]?.toLongOrNull() ?: 0L
             val tag = call.parameters["tag"]
-            val list = origamiService.getAll(limit, offset, tag)
+            val sortBy = call.parameters["sort"] ?: "id"
+            val list = origamiService.getAll(limit, offset, tag, sortBy)
             call.respond(list)
         }
 
         get("/view") {
             val name = "Wasabi Gallery"
             val selectedTag = call.parameters["tag"]
+            val sortBy = call.parameters["sort"] ?: "id"
+            
             val allTags = origamiService.getAllTags()
 
             //Initial load only first batch
-            val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0, selectedTag)
+            val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0, selectedTag, sortBy)
             
             // Explicit serializer for list of Origamis
             val origamiSerializer = ListSerializer(model.Origami.serializer())
@@ -261,12 +264,18 @@ fun Route.origami(origamiService: OrigamiService) {
 
                             <!-- Grid View (Gallery) -->
                             <div class="container" x-show="!feedMode">
-                                <!-- Tags Filter -->
-                                <div class="tags-filter">
-                                    <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
-                                    ${allTags.joinToString("") { tag -> 
-                                        "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
-                                    }}
+                                <!-- Tags & Sort Filter -->
+                                <div class="tags-filter" style="margin-bottom:10px;">
+                                    <div style="margin-bottom:5px;">
+                                        <a href="/origami/view" class="tag-pill ${if(sortBy == "id") "active" else ""}">Newest</a>
+                                        <a href="/origami/view?sort=recent" class="tag-pill ${if(sortBy == "recent") "active" else ""}">Recent Activity</a>
+                                    </div>
+                                    <div>
+                                        <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
+                                        ${allTags.joinToString("") { tag -> 
+                                            "<a href='/origami/view?tag=$tag' class='tag-pill ${if(tag == selectedTag) "active" else ""}'>#$tag</a>" 
+                                        }}
+                                    </div>
                                 </div>
 
                                 <!-- Gallery Grid -->
@@ -318,15 +327,11 @@ fun Route.origami(origamiService: OrigamiService) {
                                                     </template>
                                                  </div>
  
-                                                  <!-- Comments Debug -->
-                                                  <div style="font-size:10px; color:red; word-break:break-all; padding: 5px; border: 1px dashed red;" 
-                                                       x-text="'DEBUG Comments (Raw): ' + (img.comments || 'undefined')"></div>
- 
                                                   <!-- Comments List -->
-                                                  <div class="comments-list" style="margin-bottom:10px; padding: 5px; border: 1px solid #eee; background: #fafafa;">
+                                                  <div class="comments-list" style="margin-bottom:10px; padding: 0;">
                                                       <template x-for="comment in parseComments(img.comments)">
-                                                          <div style="font-size:14px; margin-bottom:4px; padding: 2px;">
-                                                              <span style="font-weight:600;" x-text="comment.author || 'User'"></span> 
+                                                          <div style="font-size:14px; margin-bottom:4px;">
+                                                              <span style="font-weight:600;" x-text="formatDate(comment.date)"></span> 
                                                               <span x-text="comment.text"></span>
                                                           </div>
                                                       </template>
@@ -362,6 +367,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                     newComments: {},
                                     liked: {},
                                     currentTag: '${selectedTag ?: ""}',
+                                    currentSort: '${sortBy ?: "id"}',
                                     
                                     init() {
                                         // Load liked state
@@ -381,6 +387,12 @@ fun Route.origami(origamiService: OrigamiService) {
                                         if (id) {
                                             this.fetchAndOpen(id);
                                         }
+                                    },
+                                    
+                                    formatDate(ts) {
+                                        if(!ts) return 'User';
+                                        // Simple date formatting
+                                        return new Date(ts).toLocaleString();
                                     },
                                     
                                     /* Robust Comment Parsing Helper */
@@ -429,6 +441,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                         this.loading = true;
                                         let url = '/origami/list?limit=' + this.limit + '&offset=' + this.offset;
                                         if(this.currentTag) url += '&tag=' + encodeURIComponent(this.currentTag);
+                                        if(this.currentSort) url += '&sort=' + encodeURIComponent(this.currentSort);
                                         
                                         let res = await fetch(url);
                                         if(res.ok) {

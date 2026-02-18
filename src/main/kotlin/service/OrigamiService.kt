@@ -29,6 +29,7 @@ class OrigamiService {
                 it[tags] = origami.tags
                 it[likes] = 0
                 it[comments] = "[]"
+                it[lastUpdated] = System.currentTimeMillis()
             } get Origamis.id)
         }
         return getOrigami(key)!!
@@ -41,17 +42,24 @@ class OrigamiService {
             date = row[Origamis.date],
             tags = row[Origamis.tags],
             likes = row[Origamis.likes],
-            comments = row[Origamis.comments]
+            comments = row[Origamis.comments],
+            lastUpdated = row[Origamis.lastUpdated]
         )
 
-    suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null): List<Origami> = dbQuery {
+    suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null, sortBy: String = "id"): List<Origami> = dbQuery {
         val query = if (tag != null && tag.isNotEmpty()) {
             Origamis.select { Origamis.tags like "%$tag%" }
         } else {
             Origamis.selectAll()
         }
         
-        query.orderBy(Origamis.id to SortOrder.DESC)
+        val sortOrder = if(sortBy == "recent") {
+            Origamis.lastUpdated to SortOrder.DESC
+        } else {
+            Origamis.id to SortOrder.DESC
+        }
+        
+        query.orderBy(sortOrder)
             .limit(limit, offset)
             .map { toOrigami(it) }
     }
@@ -69,18 +77,21 @@ class OrigamiService {
     suspend fun updateTags(id: Int, tags: String) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
             it[Origamis.tags] = tags
+            it[lastUpdated] = System.currentTimeMillis()
         }
     }
 
     suspend fun updateLikes(id: Int, count: Int) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
             it[likes] = count
+            it[lastUpdated] = System.currentTimeMillis()
         }
     }
 
     suspend fun updateComments(id: Int, json: String) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
             it[Origamis.comments] = json
+            it[lastUpdated] = System.currentTimeMillis()
         }
     }
 
