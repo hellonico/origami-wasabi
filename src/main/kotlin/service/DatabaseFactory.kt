@@ -19,9 +19,8 @@ object DatabaseFactory {
         val pool = hikari()
         Database.connect(pool)
         transaction {
-            SchemaUtils.createMissingTablesAndColumns(model.Origamis)
+            SchemaUtils.createMissingTablesAndColumns(model.Origamis, model.Widgets)
         }
-        runFlyway(pool)
     }
 
     private fun hikari(): HikariDataSource {
@@ -34,21 +33,6 @@ object DatabaseFactory {
             validate()
         }
         return HikariDataSource(config)
-    }
-
-    private fun runFlyway(datasource: DataSource) {
-        val flyway = Flyway.configure()
-            .dataSource(datasource)
-            .baselineOnMigrate(true)
-            .load()
-        try {
-            flyway.info()
-            flyway.migrate()
-        } catch (e: Exception) {
-            log.error("Exception running flyway migration", e)
-            throw e
-        }
-        log.info("Flyway migration has finished")
     }
 
     suspend fun <T> dbQuery(
