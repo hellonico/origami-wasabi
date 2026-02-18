@@ -132,7 +132,7 @@ fun Route.origami(origamiService: OrigamiService) {
                     unsafe {
                         +"""
                         <div x-data="gallery()" x-init="init()">
-                            <nav class="navbar">
+                            <nav class="navbar" x-show="!feedMode">
                                 <div class="nav-content">
                                     <div class="logo">Wasabi</div>
                                     <div class="act">
@@ -141,7 +141,8 @@ fun Route.origami(origamiService: OrigamiService) {
                                 </div>
                             </nav>
 
-                            <div class="container">
+                            <!-- Grid View -->
+                            <div class="container" x-show="!feedMode">
                                 <!-- Tags Filter -->
                                 <div class="tags-filter">
                                     <a href="/origami/view" class="tag-pill ${if(selectedTag == null) "active" else ""}">All</a>
@@ -153,10 +154,10 @@ fun Route.origami(origamiService: OrigamiService) {
                                 <!-- Gallery Grid -->
                                 <div class="gallery-grid">
                                     <template x-for="img in images" :key="img.id">
-                                        <div class="gallery-item" @click="selectImage(img)">
+                                        <div class="gallery-item" @click="openFeed(img)">
                                             <img :src="'/out/' + img.hash + '.out.jpg'" class="gallery-image">
                                             <div class="gallery-overlay">
-                                                <span><i class="fas fa-heart"></i> <span x-text="img.tags ? img.tags.split(',').filter(t=>t.trim()!='').length : 0"></span> Tags</span>
+                                                <span><i class="fas fa-heart"></i> <span x-text="img.tags ? img.tags.split(',').filter(t=>t.trim()!='').length : 0"></span></span>
                                             </div>
                                         </div>
                                     </template>
@@ -166,59 +167,85 @@ fun Route.origami(origamiService: OrigamiService) {
                                 </div>
                             </div>
 
-                            <!-- Modal -->
-                            <div class="modal" x-show="selectedImage" @click.self="close()" style="display: none;">
-                                <div class="close-modal" @click="close()">&times;</div>
-                                <div class="modal-content" x-show="selectedImage">
-                                    <div class="modal-image-container">
-                                        <img :src="selectedImage ? '/out/' + selectedImage.hash + '.out.jpg' : ''" class="modal-image">
-                                    </div>
-                                    <div class="modal-info">
-                                        <div class="modal-header">
-                                            <span x-text="'Image #' + (selectedImage ? selectedImage.id : '')"></span>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="modal-tags">
-                                                <template x-for="tag in (selectedImage ? (selectedImage.tags ? selectedImage.tags.split(',').filter(t=>t.trim()!='') : []) : [])">
-                                                    <span class="modal-tag">
-                                                        <span x-text="'#' + tag"></span>
-                                                        <span class="modal-tag-delete" @click="removeTag(tag)">&times;</span>
-                                                    </span>
-                                                </template>
+                            <!-- Feed View (Full Screen) -->
+                            <div class="feed-view" x-show="feedMode" style="display:none;" @scroll="onFeedScroll($event)">
+                                <div class="feed-header">
+                                    <div class="feed-close-btn" @click="closeFeed()"><i class="fas fa-chevron-left"></i></div>
+                                    <div style="flex:1; text-align:center; font-weight:600; font-family:'Grand Hotel', cursive; font-size:24px;">Posts</div>
+                                    <div style="width:24px;"></div><!-- Spacer -->
+                                </div>
+                                
+                                <div class="container" style="padding-bottom:50px;">
+                                    <template x-for="img in images" :key="img.id">
+                                        <div :id="'feed-item-'+img.id" class="feed-item" x-data="{ localTag: '' }">
+                                            <div style="padding:10px; display:flex; align-items:center;">
+                                                <div style="font-weight:600; font-size:14px;" x-text="'Image #' + img.id"></div>
                                             </div>
-                                            <div x-show="(!selectedImage || !selectedImage.tags || selectedImage.tags.length === 0)" class="text-muted" style="padding:20px; text-align:center; color:#999;">
-                                                No tags yet.
+                                            
+                                            <img :src="'/out/' + img.hash + '.out.jpg'" class="feed-image" loading="lazy">
+                                            
+                                            <div class="feed-actions">
+                                                 <div style="margin-bottom:8px;">
+                                                    <i class="far fa-heart fa-lg" style="margin-right:15px; cursor:pointer;"></i>
+                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="$refs.tagInput.focus()"></i>
+                                                    <i class="far fa-paper-plane fa-lg" style="cursor:pointer;"></i>
+                                                 </div>
+                                                 
+                                                 <div class="feed-tags" style="margin-bottom:8px; padding:0;">
+                                                    <template x-for="tag in img.tags ? img.tags.split(',').filter(t=>t.trim()!='') : []">
+                                                         <span style="color:#00376b; margin-right:5px;">
+                                                            #<span x-text="tag"></span>
+                                                            <span style="color:#ed4956; cursor:pointer; font-size:10px;" @click="removeTag(img, tag)">&times;</span>
+                                                         </span>
+                                                    </template>
+                                                    <div x-show="!img.tags || img.tags.length===0" style="color:#8e8e8e; font-size:12px;">No tags yet</div>
+                                                 </div>
+
+                                                 <form @submit.prevent="addTag(img, localTag); localTag=''">
+                                                     <input x-model="localTag" x-ref="tagInput" placeholder="Add a tag..." 
+                                                            style="width:100%; border:none; outline:none; font-size:14px; padding:5px 0;">
+                                                     <button type="submit" x-show="localTag" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
+                                                 </form>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <form @submit.prevent="addTag()" class="add-tag-form">
-                                                <input type="text" x-model="newTag" class="tag-input" placeholder="Add a tag...">
-                                                <button type="submit" class="post-btn" :disabled="!newTag">Post</button>
-                                            </form>
-                                        </div>
+                                    </template>
+                                    <div x-show="loading" style="text-align:center; padding:20px;">
+                                        <i class="fas fa-spinner fa-spin fa-2x"></i>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
 
                         <script>
                             function gallery() {
                                 return {
                                     images: $jsonOrigamis,
-                                    selectedImage: null,
-                                    newTag: '',
+                                    feedMode: false,
                                     offset: 20,
                                     limit: 20,
                                     loading: false,
                                     ended: false,
                                     currentTag: '${selectedTag ?: ""}',
+                                    
                                     init() {
                                         window.addEventListener('scroll', () => {
-                                            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                                                this.loadMore();
+                                            if(!this.feedMode) {
+                                               if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                                                   this.loadMore();
+                                               }
                                             }
                                         });
                                     },
+                                    
+                                    onFeedScroll(e) {
+                                        // Endless scroll in feed view
+                                        const el = e.target;
+                                        if ((el.scrollHeight - el.scrollTop - el.clientHeight) < 500) {
+                                            this.loadMore();
+                                        }
+                                    },
+
                                     async loadMore() {
                                         if(this.loading || this.ended) return;
                                         this.loading = true;
@@ -237,18 +264,26 @@ fun Route.origami(origamiService: OrigamiService) {
                                         }
                                         this.loading = false;
                                     },
-                                    selectImage(img) { 
-                                        this.selectedImage = img; 
+                                    
+                                    openFeed(img) { 
+                                        this.feedMode = true; 
                                         document.body.style.overflow = 'hidden';
+                                        
+                                        // Wait for rendering then scroll
+                                        setTimeout(() => {
+                                            let el = document.getElementById('feed-item-' + img.id);
+                                            if(el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                                        }, 50);
                                     },
-                                    close() { 
-                                        this.selectedImage = null; 
+                                    
+                                    closeFeed() { 
+                                        this.feedMode = false; 
                                         document.body.style.overflow = 'auto';
                                     },
-                                    async addTag() {
-                                        if(!this.newTag) return;
-                                        let id = this.selectedImage.id;
-                                        let tag = this.newTag;
+
+                                    async addTag(img, tag) {
+                                        if(!tag) return;
+                                        let id = img.id;
                                         let formData = new URLSearchParams();
                                         formData.append('tag', tag);
                                         
@@ -260,24 +295,21 @@ fun Route.origami(origamiService: OrigamiService) {
 
                                         if(res.ok) {
                                             let data = await res.json();
-                                            // Update local state
-                                            this.selectedImage.tags = data.tags;
-                                            this.newTag = '';
-                                            // Find in list to update grid overlay count
+                                            // Update local state by finding image in array
                                             let idx = this.images.findIndex(i => i.id === id);
                                             if(idx > -1) this.images[idx].tags = data.tags;
                                         }
                                     },
-                                    async removeTag(tag) {
+
+                                    async removeTag(img, tag) {
                                         if(!confirm('Delete tag ' + tag + '?')) return;
-                                        let id = this.selectedImage.id;
+                                        let id = img.id;
                                         let res = await fetch('/origami/' + id + '/tag/' + encodeURIComponent(tag), {
                                             method: 'DELETE'
                                         });
 
                                         if(res.ok) {
                                             let data = await res.json();
-                                            this.selectedImage.tags = data.tags;
                                             let idx = this.images.findIndex(i => i.id === id);
                                             if(idx > -1) this.images[idx].tags = data.tags;
                                         }
@@ -290,7 +322,7 @@ fun Route.origami(origamiService: OrigamiService) {
                 }
             }
         }
-
+        
         post("/preview") {
             val multipart = call.receiveMultipart()
             val result = util.ImgProcessor().processPreview(multipart)
