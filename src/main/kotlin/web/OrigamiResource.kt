@@ -15,8 +15,10 @@ import model.Comment
 import model.Origamis
 import org.slf4j.LoggerFactory
 import org.opencv.core.Mat
+import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs.imread
 import org.opencv.imgcodecs.Imgcodecs.imwrite
+import org.opencv.imgproc.Imgproc
 import origami.Origami
 import service.OrigamiService
 import service.WidgetService
@@ -68,6 +70,43 @@ fun Route.origami(origamiService: OrigamiService) {
             if(id != null) {
                 val o = origamiService.getOrigami(id)
                 if(o != null) call.respond(o) else call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        get("/thumbnail/{hash}") {
+            val hash = call.parameters["hash"]
+            if (hash != null) {
+                val cacheFile = File("out/${hash}.thumb.jpg")
+                if (cacheFile.exists()) {
+                    call.respondFile(cacheFile)
+                } else {
+                    val original = File("out/${hash}.out.jpg")
+                    if (original.exists()) {
+                        try {
+                            val src = imread(original.absolutePath)
+                            if (!src.empty()) {
+                                val dst = Mat()
+                                // Resize to width 600
+                                val width = 600.0
+                                val ratio = width / src.width()
+                                val height = src.height() * ratio
+                                Imgproc.resize(src, dst, Size(width, height))
+                                imwrite(cacheFile.absolutePath, dst)
+                                call.respondFile(cacheFile)
+                            } else {
+                                // Fallback if regular load fails
+                                call.respondFile(original)
+                            }
+                        } catch(e: Exception) {
+                            log.error("Error resizing image: $hash", e)
+                            call.respondFile(original)
+                        }
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest)
             }
         }
 
@@ -219,7 +258,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                 <div class="gallery-grid">
                                     <template x-for="img in images" :key="img.id">
                                         <div class="gallery-item" @click="openFeed(img)">
-                                            <img :src="'/out/' + img.hash + '.out.jpg'" class="gallery-image">
+                                            <img :src="'/origami/thumbnail/' + img.hash" class="gallery-image">
                                             <div class="gallery-overlay">
                                                 <span><i class="fas fa-heart"></i> <span x-text="img.likes || 0"></span></span>
                                             </div>
@@ -244,7 +283,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                                 <div style="font-size:12px; color:#8e8e8e;" x-text="new Date(img.date).toLocaleDateString()"></div>
                                             </div>
                                             
-                                            <img :src="'/out/' + img.hash + '.out.jpg'" class="feed-image" loading="lazy" @dblclick="toggleLike(img)">
+                                            <img :src="'/origami/thumbnail/' + img.hash" class="feed-image" loading="lazy" @dblclick="toggleLike(img)">
                                             
                                             <div class="feed-actions">
                                                  <div style="margin-bottom:12px; display:flex; align-items:center;">
@@ -263,14 +302,15 @@ fun Route.origami(origamiService: OrigamiService) {
                                                          <a :href="'/origami/view?tag='+tag" style="color:#00376b; margin-right:5px; text-decoration:none;">#<span x-text="tag"></span></a>
                                                     </template>
                                                  </div>
-
+ 
                                                   <!-- Comments Debug -->
-                                                  <!-- <div style="font-size:10px; color:red; word-break:break-all;" x-text="'DEBUG: ' + (img.comments || 'null')"></div> -->
-
+                                                  <div style="font-size:10px; color:red; word-break:break-all; padding: 5px; border: 1px dashed red;" 
+                                                       x-text="'DEBUG Comments (Raw): ' + (img.comments || 'undefined')"></div>
+ 
                                                   <!-- Comments List -->
-                                                  <div class="comments-list" style="margin-bottom:10px; padding: 0;">
+                                                  <div class="comments-list" style="margin-bottom:10px; padding: 5px; border: 1px solid #eee; background: #fafafa;">
                                                       <template x-for="comment in parseComments(img.comments)">
-                                                          <div style="font-size:14px; margin-bottom:4px;">
+                                                          <div style="font-size:14px; margin-bottom:4px; padding: 2px;">
                                                               <span style="font-weight:600;" x-text="comment.author || 'User'"></span> 
                                                               <span x-text="comment.text"></span>
                                                           </div>
