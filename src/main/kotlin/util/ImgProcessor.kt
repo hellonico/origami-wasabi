@@ -41,6 +41,7 @@ class ImgProcessor {
                     origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis()))
                     result.add(hash)
                 }
+                else -> {}
             }
             part.dispose()
         }
@@ -78,7 +79,7 @@ class ImgProcessor {
                         }
                     }
                 }
-
+                else -> {}
             }
             try {
                 return Origami.StringToFilter(filterfile)

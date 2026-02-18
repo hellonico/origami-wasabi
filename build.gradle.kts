@@ -9,9 +9,15 @@ val restAssuredVersion="4.4.0"
 val junitVersion="5.7.2"
 
 plugins {
-    kotlin("jvm") version "1.5.20"
-    kotlin("plugin.serialization") version "1.5.20"
+    kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
     application
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 repositories {
@@ -41,6 +47,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("origami:filters:1.48")
     implementation("origami:origami:4.13.0-2-SNAPSHOT")
+    implementation("org.clojure:clojure:1.11.3")
 
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")

@@ -1,3 +1,3 @@
 #!/bin/sh
-websocat ws://localhost:8080/updates
+websocat ws://localhost:8095/updates
 
