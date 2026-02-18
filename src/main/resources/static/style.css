@@ -5,58 +5,12 @@
     padding: 0;
 }
 
-/* Filter Bar */
-.filter-bar {
-    display: flex;
-    overflow-x: auto;
-    padding: 10px 0;
-    margin-bottom: 20px;
-    gap: 10px;
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE 10+ */
-    position: relative;
-    z-index: 50;
-}
-
-.filter-bar::-webkit-scrollbar {
-    width: 0px;
-    background: transparent;
-    /* Chrome/Safari/Webkit */
-}
-
-.filter-chip {
-    flex: 0 0 auto;
-    padding: 8px 16px;
-    background: #fff;
-    border: 1px solid #dbdbdb;
-    border-radius: 20px;
-    font-size: 14px;
-    color: #262626;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
-    white-space: nowrap;
-}
-
-.filter-chip:hover {
-    background: #fafafa;
-    border-color: #8e8e8e;
-}
-
-.filter-chip.active {
-    background: #262626;
-    color: #fff;
-    border-color: #262626;
-    font-weight: 600;
-}
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #fafafa;
     color: #262626;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* Navbar */
@@ -84,8 +38,6 @@ body {
     font-weight: 500;
 }
 
-/* Improved Mobile Responsiveness & Touch Targets */
-
 /* Buttons */
 .upload-btn {
     background: #0095f6;
@@ -93,7 +45,6 @@ body {
     border: none;
     border-radius: 4px;
     padding: 10px 20px;
-    /* Larger touch target */
     font-weight: 600;
     font-size: 16px;
     cursor: pointer;
@@ -118,99 +69,7 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 28px;
-    /* Classic Instagram gap */
     margin-bottom: 40px;
-}
-
-@media (max-width: 736px) {
-    .gallery-grid {
-        grid-template-columns: 1fr;
-        /* Single column on mobile */
-        gap: 10px;
-    }
-
-    .container {
-        padding: 0 10px;
-        /* Slight padding */
-    }
-
-    .gallery-item {
-        padding-top: 100%;
-        /* Keep 1:1 aspect ratio */
-        border-radius: 8px;
-        /* Rounded corners for card look */
-        overflow: hidden;
-    }
-
-    .tags-filter {
-        padding: 10px 0;
-    }
-}
-
-/* Feed View (Full Screen Scrolling) */
-.feed-view {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    z-index: 2000;
-    overflow-y: auto;
-    padding-top: 60px;
-    /* Space for close button header */
-}
-
-.feed-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background: #fff;
-    border-bottom: 1px solid #dbdbdb;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    z-index: 2010;
-}
-
-.feed-close-btn {
-    font-size: 24px;
-    cursor: pointer;
-    color: #262626;
-}
-
-.feed-item {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #efefef;
-    padding-bottom: 20px;
-}
-
-.feed-image {
-    width: 100%;
-    height: auto;
-    display: block;
-    max-height: 80vh;
-    object-fit: contain;
-    background: #fafafa;
-}
-
-.feed-actions {
-    padding: 12px 15px;
-    display: flex;
-    align-items: center;
-}
-
-.feed-actions i {
-    font-size: 26px !important;
-    margin-right: 24px !important;
-    padding: 5px;
-    /* Larger hit area */
-}
-
-.feed-tags {
-    padding: 0 15px;
 }
 
 .gallery-item {
@@ -253,175 +112,211 @@ body {
     opacity: 1;
 }
 
-/* Tags Filter */
+/* Feed View */
+.feed-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    z-index: 2000;
+    overflow-y: auto;
+    padding-top: 60px;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling iOS */
+}
+
+.feed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #fff;
+    border-bottom: 1px solid #dbdbdb;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 2010;
+}
+
+.feed-close-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: #262626;
+    padding: 10px;
+    /* Touch target */
+}
+
+.feed-item {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #efefef;
+    padding-bottom: 20px;
+    background: #fff;
+}
+
+.feed-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 80vh;
+    object-fit: contain;
+    background: #fafafa;
+}
+
+.feed-actions {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+}
+
+/* Default Feed Icons */
+.feed-actions i {
+    font-size: 26px !important;
+    margin-right: 24px !important;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.feed-tags {
+    padding: 0 15px;
+}
+
+/* Filter/Tag Bars */
+.filter-bar,
 .tags-filter {
     display: flex;
     overflow-x: auto;
-    padding-bottom: 10px;
+    padding: 10px 0;
     margin-bottom: 20px;
-    border-bottom: 1px solid #dbdbdb;
-    -ms-overflow-style: none;
+    gap: 10px;
     scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
+.filter-bar::-webkit-scrollbar,
 .tags-filter::-webkit-scrollbar {
     display: none;
 }
 
+.filter-chip,
 .tag-pill {
     flex: 0 0 auto;
     padding: 8px 16px;
-    margin-right: 12px;
     background: #fff;
     border: 1px solid #dbdbdb;
     border-radius: 20px;
-    color: #262626;
-    text-decoration: none;
     font-size: 15px;
+    color: #262626;
+    cursor: pointer;
+    text-decoration: none;
     font-weight: 600;
+    white-space: nowrap;
 }
 
+.filter-chip.active,
 .tag-pill.active {
     background: #262626;
     color: #fff;
     border-color: #262626;
 }
 
-/* Modal */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    color: white;
-    font-size: 30px;
-    cursor: pointer;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 3px;
-    display: flex;
-    max-width: 935px;
-    width: 100%;
-    max-height: 90vh;
-    overflow: hidden;
-}
-
-.modal-image-container {
-    flex: 1.5;
-    /* more space for image */
-    background: black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-.modal-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-left: 1px solid #efefef;
-    min-width: 300px;
-}
-
-.modal-header {
-    padding: 16px;
-    border-bottom: 1px solid #efefef;
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-}
-
-.modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-}
-
-.modal-tags {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.modal-tag {
-    color: #00376b;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    background: #e0f1ff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-}
-
-.modal-tag-delete {
-    margin-left: 4px;
-    color: #0095f6;
-    font-weight: bold;
-    font-size: 12px;
-}
-
-.modal-tag-delete:hover {
-    color: red;
-}
-
-.modal-footer {
-    padding: 16px;
-    border-top: 1px solid #efefef;
-}
-
-.add-tag-form {
-    display: flex;
-    align-items: center;
-}
-
-.tag-input {
-    flex: 1;
-    border: none;
-    outline: none;
-    font-size: 14px;
-}
-
-.post-btn {
-    background: transparent;
-    border: none;
-    color: #0095f6;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.post-btn:disabled {
-    opacity: 0.3;
-}
-
+/* ----- MOBILE OPTIMIZATIONS ----- */
 @media (max-width: 736px) {
-    .modal-content {
-        flex-direction: column;
+
+    /* Navbar Scaling */
+    .navbar {
+        padding: 20px 15px;
+        /* Taller */
     }
 
-    .modal-image-container {
-        height: 50vh;
+    .logo {
+        font-size: 40px;
+        /* Bigger Logo */
+    }
+
+    .upload-btn {
+        padding: 12px 24px;
+        font-size: 16px;
+    }
+
+    /* Grid to Feed Conversion */
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        /* Single column */
+        gap: 15px;
+    }
+
+    .container {
+        padding: 0;
+        /* Edge to edge */
+    }
+
+    .gallery-item {
+        margin-bottom: 5px;
+        border-radius: 0;
+    }
+
+    /* Feed View Scaling */
+    .feed-header {
+        height: 70px;
+        font-size: 20px;
+    }
+
+    .feed-view {
+        padding-top: 70px;
+    }
+
+    .feed-close-btn {
+        font-size: 32px;
+        /* Easy to tap close */
+        padding: 15px;
+    }
+
+    /* Bigger Icons */
+    .feed-actions {
+        padding: 15px;
+        justify-content: flex-start;
+        /* Ensure left align */
+    }
+
+    .feed-actions i {
+        font-size: 32px !important;
+        /* Huge icons for mobile */
+        margin-right: 32px !important;
+        /* Proper spacing */
+    }
+
+    /* Touch Friendly Comments */
+    .comments-list {
+        font-size: 15px !important;
+        line-height: 1.4;
+    }
+
+    /* Inputs */
+    input,
+    textarea {
+        font-size: 16px !important;
+        /* Prevent iOS zoom */
+    }
+
+    /* Comment Input Area */
+    form[style*="padding: 0 15px;"] {
+        padding: 10px 15px !important;
+        /* background: #f9f9f9; */
+    }
+
+    /* Make input taller */
+    input[placeholder="Add a comment..."] {
+        padding: 15px 0 !important;
+        height: 50px;
+    }
+
+    /* Tag pills bigger */
+    .tag-pill,
+    .filter-chip {
+        padding: 10px 20px;
+        font-size: 16px;
     }
 }
