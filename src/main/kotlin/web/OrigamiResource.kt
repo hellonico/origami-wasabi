@@ -264,11 +264,14 @@ fun Route.origami(origamiService: OrigamiService) {
                                                     </template>
                                                  </div>
 
-                                                 <!-- Comments List -->
+                                                  <!-- Comments Debug -->
+                                                  <!-- <div style="font-size:10px; color:red; word-break:break-all;" x-text="'DEBUG: ' + (img.comments || 'null')"></div> -->
+
+                                                  <!-- Comments List -->
                                                   <div class="comments-list" style="margin-bottom:10px; padding: 0;">
                                                       <template x-for="comment in parseComments(img.comments)">
                                                           <div style="font-size:14px; margin-bottom:4px;">
-                                                              <span style="font-weight:600;" x-text="comment.author"></span> 
+                                                              <span style="font-weight:600;" x-text="comment.author || 'User'"></span> 
                                                               <span x-text="comment.text"></span>
                                                           </div>
                                                       </template>
