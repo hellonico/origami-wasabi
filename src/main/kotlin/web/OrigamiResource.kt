@@ -194,16 +194,18 @@ fun Route.origami(origamiService: OrigamiService) {
                     unsafe {
                         +"""
                         <div x-data="gallery()" x-init="init()">
-                            <nav class="navbar" x-show="!feedMode">
+                            <nav class="navbar">
                                 <div class="nav-content">
-                                    <div class="logo">Wasabi</div>
-                                    <div class="act">
+                                    <div class="logo" @click="feedMode = true; window.scrollTo(0,0);">Wasabi</div>
+                                    <div class="act" style="display:flex; align-items:center;">
+                                        <i class="fas fa-th-large fa-lg" x-show="feedMode" @click="feedMode = false" style="cursor:pointer; margin-right:20px; font-size: 24px;"></i>
+                                        <i class="fas fa-stream fa-lg" x-show="!feedMode" @click="feedMode = true" style="cursor:pointer; margin-right:20px; font-size: 24px;"></i>
                                         <a href="/" class="upload-btn">Upload</a>
                                     </div>
                                 </div>
                             </nav>
 
-                            <!-- Grid View -->
+                            <!-- Grid View (Gallery) -->
                             <div class="container" x-show="!feedMode">
                                 <!-- Tags Filter -->
                                 <div class="tags-filter">
@@ -229,33 +231,30 @@ fun Route.origami(origamiService: OrigamiService) {
                                 </div>
                             </div>
 
-                            <!-- Feed View (Full Screen) -->
-                            <div class="feed-view" x-show="feedMode" style="display:none;" @scroll="onFeedScroll(${'$'}event)">
-                                <div class="feed-header">
-                                    <div class="feed-close-btn" @click="closeFeed()"><i class="fas fa-chevron-left"></i></div>
-                                    <div style="flex:1; text-align:center; font-weight:600; font-family:'Grand Hotel', cursive; font-size:24px;">Posts</div>
-                                    <div style="width:24px;"></div><!-- Spacer -->
-                                </div>
-                                
-                                <div class="container" style="padding-bottom:50px;">
+                            <!-- Feed View (Default Browsing) -->
+                            <div class="container feed-container" x-show="feedMode">
+                                <div style="padding-bottom:50px;">
                                     <template x-for="img in images" :key="img.id">
-                                        <div :id="'feed-item-'+img.id" class="feed-item">
-                                            <div style="padding:10px; display:flex; align-items:center; justify-content:space-between;">
-                                                <div style="font-weight:600; font-size:14px;" x-text="'Image #' + img.id"></div>
+                                        <div :id="'feed-item-'+img.id" class="feed-item" style="background:#fff; border:1px solid #dbdbdb; border-radius:3px; margin-bottom:60px;">
+                                            <div style="padding:15px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #efefef;">
+                                                <div style="font-weight:600; font-size:14px; display:flex; align-items:center;">
+                                                    <div style="width:32px; height:32px; background:#efefef; border-radius:50%; margin-right:10px;"></div>
+                                                    WasabiUser
+                                                </div>
                                                 <div style="font-size:12px; color:#8e8e8e;" x-text="new Date(img.date).toLocaleDateString()"></div>
                                             </div>
                                             
                                             <img :src="'/out/' + img.hash + '.out.jpg'" class="feed-image" loading="lazy" @dblclick="toggleLike(img)">
                                             
                                             <div class="feed-actions">
-                                                 <div style="margin-bottom:8px; display:flex; align-items:center;">
+                                                 <div style="margin-bottom:12px; display:flex; align-items:center;">
                                                     <i class="fa-heart fa-lg" :class="liked[img.id] ? 'fas text-red-500' : 'far'" 
-                                                       style="margin-right:15px; cursor:pointer; color: #ed4956;" @click="toggleLike(img)"></i>
-                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="document.getElementById('comment-input-'+img.id).focus()"></i>
+                                                       style="margin-right:20px; cursor:pointer; color: #ed4956;" @click="toggleLike(img)"></i>
+                                                    <i class="far fa-comment fa-lg" style="margin-right:20px; cursor:pointer;" @click="document.getElementById('comment-input-'+img.id).focus()"></i>
                                                     <i class="far fa-paper-plane fa-lg" style="cursor:pointer;" @click="shareImage(img)"></i>
                                                  </div>
                                                  
-                                                 <div style="font-weight:600; font-size:14px; margin-bottom:5px;" x-show="img.likes > 0">
+                                                 <div style="font-weight:600; font-size:14px; margin-bottom:8px;" x-show="img.likes > 0">
                                                      <span x-text="img.likes"></span> likes
                                                  </div>
                                                  
@@ -266,7 +265,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                                  </div>
 
                                                  <!-- Comments List -->
-                                                  <div class="comments-list" style="margin-bottom:10px; padding: 0 15px;">
+                                                  <div class="comments-list" style="margin-bottom:10px; padding: 0;">
                                                       <template x-for="comment in (img.comments ? JSON.parse(img.comments) : [])">
                                                           <div style="font-size:14px; margin-bottom:4px;">
                                                               <span style="font-weight:600;" x-text="comment.author"></span> 
@@ -274,11 +273,13 @@ fun Route.origami(origamiService: OrigamiService) {
                                                           </div>
                                                       </template>
                                                   </div>
-
-                                                 <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''" style="padding: 0 15px;">
+                                            </div>
+                                            
+                                            <div style="border-top:1px solid #efefef; padding:10px 15px;">
+                                                 <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''" style="display:flex; align-items:center;">
                                                      <input x-model="newComments[img.id]" :id="'comment-input-'+img.id" placeholder="Add a comment..." 
-                                                            style="width:100%; border:none; outline:none; font-size:14px; padding:10px 0; border-top:1px solid #efefef;">
-                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer; float:right;">Post</button>
+                                                            style="flex:1; border:none; outline:none; font-size:14px; padding:5px 0;">
+                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer; margin-left:10px;">Post</button>
                                                  </form>
                                             </div>
                                         </div>
@@ -295,7 +296,7 @@ fun Route.origami(origamiService: OrigamiService) {
                             function gallery() {
                                 return {
                                     images: $jsonOrigamis,
-                                    feedMode: false,
+                                    feedMode: true, // Default to Feed
                                     offset: 20,
                                     limit: 20,
                                     loading: false,
@@ -309,12 +310,11 @@ fun Route.origami(origamiService: OrigamiService) {
                                         let stored = localStorage.getItem('wasabi_likes');
                                         if(stored) this.liked = JSON.parse(stored);
 
+                                        // Universal Scroll Listener (Window)
                                         window.addEventListener('scroll', () => {
-                                            if(!this.feedMode) {
-                                               if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                                                   this.loadMore();
-                                               }
-                                            }
+                                           if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+                                               this.loadMore();
+                                           }
                                         });
                                         
                                         // Check for ID in URL
@@ -345,10 +345,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                     },
                                     
                                     onFeedScroll(e) {
-                                        const el = e.target;
-                                        if ((el.scrollHeight - el.scrollTop - el.clientHeight) < 500) {
-                                            this.loadMore();
-                                        }
+                                        // Deprecated, using window scroll now
                                     },
 
                                     async loadMore() {
@@ -372,18 +369,14 @@ fun Route.origami(origamiService: OrigamiService) {
                                     
                                     openFeed(img) { 
                                         this.feedMode = true; 
-                                        document.body.style.overflow = 'hidden';
                                         setTimeout(() => {
                                             let el = document.getElementById('feed-item-' + img.id);
-                                            if(el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+                                            if(el) el.scrollIntoView({ behavior: 'auto', block: 'center' });
                                         }, 50);
                                     },
                                     
                                     closeFeed() { 
                                         this.feedMode = false; 
-                                        document.body.style.overflow = 'auto';
-                                        // Update URL back to clean
-                                        window.history.pushState({}, '', '/origami/view');
                                     },
 
                                     async toggleLike(img) {
