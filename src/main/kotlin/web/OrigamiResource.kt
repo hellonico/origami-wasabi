@@ -8,7 +8,10 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import model.Comment
 import model.Origamis
 import org.opencv.core.Mat
 import org.opencv.imgcodecs.Imgcodecs.imread
@@ -54,6 +57,49 @@ fun Route.origami(origamiService: OrigamiService) {
             if(id != null) {
                 val o = origamiService.getOrigami(id)
                 if(o != null) call.respond(o) else call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        post("/{id}/like") {
+             val id = call.parameters["id"]?.toIntOrNull()
+             if (id != null) {
+                 val o = origamiService.getOrigami(id)
+                 if (o != null) {
+                     val newLikes = o.likes + 1
+                     origamiService.updateLikes(id, newLikes)
+                     call.respond(HttpStatusCode.OK, mapOf("likes" to newLikes))
+                 } else {
+                     call.respond(HttpStatusCode.NotFound)
+                 }
+             } else {
+                 call.respond(HttpStatusCode.BadRequest)
+             }
+        }
+
+        post("/{id}/comment") {
+            val id = call.parameters["id"]?.toIntOrNull()
+            val params = call.receiveParameters()
+            val text = params["text"]?.trim()
+
+            if (id != null && !text.isNullOrBlank()) {
+                val o = origamiService.getOrigami(id)
+                if (o != null) {
+                    val currentComments: MutableList<Comment> = try {
+                        Json.decodeFromString(o.comments)
+                    } catch(e: Exception) { mutableListOf() }
+                    
+                    val newComment = Comment(text, System.currentTimeMillis())
+                    currentComments.add(newComment)
+                    
+                    val json = Json.encodeToString(currentComments)
+                    origamiService.updateComments(id, json)
+                    
+                    call.respond(HttpStatusCode.OK, mapOf("comments" to json))
+                } else {
+                    call.respond(HttpStatusCode.NotFound)
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest)
             }
         }
 
@@ -157,7 +203,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                         <div class="gallery-item" @click="openFeed(img)">
                                             <img :src="'/out/' + img.hash + '.out.jpg'" class="gallery-image">
                                             <div class="gallery-overlay">
-                                                <span><i class="fas fa-heart"></i> <span x-text="img.tags ? img.tags.split(',').filter(t=>t.trim()!='').length : 0"></span></span>
+                                                <span><i class="fas fa-heart"></i> <span x-text="img.likes || 0"></span></span>
                                             </div>
                                         </div>
                                     </template>
@@ -178,33 +224,45 @@ fun Route.origami(origamiService: OrigamiService) {
                                 <div class="container" style="padding-bottom:50px;">
                                     <template x-for="img in images" :key="img.id">
                                         <div :id="'feed-item-'+img.id" class="feed-item">
-                                            <div style="padding:10px; display:flex; align-items:center;">
+                                            <div style="padding:10px; display:flex; align-items:center; justify-content:space-between;">
                                                 <div style="font-weight:600; font-size:14px;" x-text="'Image #' + img.id"></div>
+                                                <div style="font-size:12px; color:#8e8e8e;" x-text="new Date(img.date).toLocaleDateString()"></div>
                                             </div>
                                             
-                                            <img :src="'/out/' + img.hash + '.out.jpg'" class="feed-image" loading="lazy">
+                                            <img :src="'/out/' + img.hash + '.out.jpg'" class="feed-image" loading="lazy" @dblclick="toggleLike(img)">
                                             
                                             <div class="feed-actions">
-                                                 <div style="margin-bottom:8px;">
-                                                    <i class="far fa-heart fa-lg" style="margin-right:15px; cursor:pointer;"></i>
-                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="document.getElementById('tag-input-'+img.id).focus()"></i>
-                                                    <i class="far fa-paper-plane fa-lg" style="cursor:pointer;"></i>
+                                                 <div style="margin-bottom:8px; display:flex; align-items:center;">
+                                                    <i class="fa-heart fa-lg" :class="liked[img.id] ? 'fas text-red-500' : 'far'" 
+                                                       style="margin-right:15px; cursor:pointer; color: #ed4956;" @click="toggleLike(img)"></i>
+                                                    <i class="far fa-comment fa-lg" style="margin-right:15px; cursor:pointer;" @click="document.getElementById('comment-input-'+img.id).focus()"></i>
+                                                    <i class="far fa-paper-plane fa-lg" style="cursor:pointer;" @click="shareImage(img)"></i>
+                                                 </div>
+                                                 
+                                                 <div style="font-weight:600; font-size:14px; margin-bottom:5px;" x-show="img.likes > 0">
+                                                     <span x-text="img.likes"></span> likes
                                                  </div>
                                                  
                                                  <div class="feed-tags" style="margin-bottom:8px; padding:0;">
                                                     <template x-for="tag in img.tags ? img.tags.split(',').filter(t=>t.trim()!='') : []">
-                                                         <span style="color:#00376b; margin-right:5px;">
-                                                            #<span x-text="tag"></span>
-                                                            <span style="color:#ed4956; cursor:pointer; font-size:10px;" @click="removeTag(img, tag)">&times;</span>
-                                                         </span>
+                                                         <span style="color:#00376b; margin-right:5px;">#<span x-text="tag"></span></span>
                                                     </template>
-                                                    <div x-show="!img.tags || img.tags.length===0" style="color:#8e8e8e; font-size:12px;">No tags yet</div>
                                                  </div>
 
-                                                 <form @submit.prevent="addTag(img, newTags[img.id]); newTags[img.id]=''">
-                                                     <input x-model="newTags[img.id]" :id="'tag-input-'+img.id" placeholder="Add a tag..." 
+                                                 <!-- Comments List -->
+                                                  <div class="comments-list" style="margin-bottom:10px;">
+                                                      <template x-for="comment in (img.comments ? JSON.parse(img.comments) : [])">
+                                                          <div style="font-size:14px; margin-bottom:2px;">
+                                                              <span style="font-weight:600;" x-text="comment.author"></span> 
+                                                              <span x-text="comment.text"></span>
+                                                          </div>
+                                                      </template>
+                                                  </div>
+
+                                                 <form @submit.prevent="addComment(img, newComments[img.id]); newComments[img.id]=''">
+                                                     <input x-model="newComments[img.id]" :id="'comment-input-'+img.id" placeholder="Add a comment..." 
                                                             style="width:100%; border:none; outline:none; font-size:14px; padding:5px 0;">
-                                                     <button type="submit" x-show="newTags[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
+                                                     <button type="submit" x-show="newComments[img.id]" style="color:#0095f6; font-weight:600; background:none; border:none; padding:0; cursor:pointer;">Post</button>
                                                  </form>
                                             </div>
                                         </div>
@@ -226,10 +284,15 @@ fun Route.origami(origamiService: OrigamiService) {
                                     limit: 20,
                                     loading: false,
                                     ended: false,
-                                    newTags: {},
+                                    newComments: {},
+                                    liked: {},
                                     currentTag: '${selectedTag ?: ""}',
                                     
                                     init() {
+                                        // Load liked state from storage
+                                        let stored = localStorage.getItem('wasabi_likes');
+                                        if(stored) this.liked = JSON.parse(stored);
+
                                         window.addEventListener('scroll', () => {
                                             if(!this.feedMode) {
                                                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
@@ -240,7 +303,6 @@ fun Route.origami(origamiService: OrigamiService) {
                                     },
                                     
                                     onFeedScroll(e) {
-                                        // Endless scroll in feed view
                                         const el = e.target;
                                         if ((el.scrollHeight - el.scrollTop - el.clientHeight) < 500) {
                                             this.loadMore();
@@ -269,8 +331,6 @@ fun Route.origami(origamiService: OrigamiService) {
                                     openFeed(img) { 
                                         this.feedMode = true; 
                                         document.body.style.overflow = 'hidden';
-                                        
-                                        // Wait for rendering then scroll
                                         setTimeout(() => {
                                             let el = document.getElementById('feed-item-' + img.id);
                                             if(el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -282,13 +342,26 @@ fun Route.origami(origamiService: OrigamiService) {
                                         document.body.style.overflow = 'auto';
                                     },
 
-                                    async addTag(img, tag) {
-                                        if(!tag) return;
+                                    async toggleLike(img) {
+                                        // Update UI immediately (optimistic)
+                                        if(this.liked[img.id]) return; // Only allow 1 like per session/device for now for simplicity
+
+                                        this.liked[img.id] = true;
+                                        localStorage.setItem('wasabi_likes', JSON.stringify(this.liked));
+                                        
+                                        img.likes = (img.likes || 0) + 1;
+
+                                        // API Call
+                                        await fetch('/origami/' + img.id + '/like', { method: 'POST' });
+                                    },
+
+                                    async addComment(img, text) {
+                                        if(!text) return;
                                         let id = img.id;
                                         let formData = new URLSearchParams();
-                                        formData.append('tag', tag);
+                                        formData.append('text', text);
                                         
-                                        let res = await fetch('/origami/' + id + '/tag', {
+                                        let res = await fetch('/origami/' + id + '/comment', {
                                             method: 'POST',
                                             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                                             body: formData
@@ -296,23 +369,22 @@ fun Route.origami(origamiService: OrigamiService) {
 
                                         if(res.ok) {
                                             let data = await res.json();
-                                            // Update local state by finding image in array
-                                            let idx = this.images.findIndex(i => i.id === id);
-                                            if(idx > -1) this.images[idx].tags = data.tags;
+                                            // Update local state
+                                            img.comments = data.comments; // Replace with updated list
                                         }
                                     },
-
-                                    async removeTag(img, tag) {
-                                        if(!confirm('Delete tag ' + tag + '?')) return;
-                                        let id = img.id;
-                                        let res = await fetch('/origami/' + id + '/tag/' + encodeURIComponent(tag), {
-                                            method: 'DELETE'
-                                        });
-
-                                        if(res.ok) {
-                                            let data = await res.json();
-                                            let idx = this.images.findIndex(i => i.id === id);
-                                            if(idx > -1) this.images[idx].tags = data.tags;
+                                    
+                                    shareImage(img) {
+                                        let url = window.location.origin + '/out/' + img.hash + '.out.jpg';
+                                        if (navigator.share) {
+                                            navigator.share({
+                                                title: 'Wasabi Photo',
+                                                text: 'Check out this photo on Wasabi!',
+                                                url: url,
+                                            }).catch((error) => console.log('Error sharing', error));
+                                        } else {
+                                            // Fallback
+                                            prompt("Copy link to share:", url);
                                         }
                                     }
                                 }

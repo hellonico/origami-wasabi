@@ -16,7 +16,7 @@ class OrigamiService {
 
     suspend fun deleteOrigami(id: Int) = dbQuery {
         Origamis.deleteWhere {
-            (Origamis.hash eq id)
+            (Origamis.id eq id)
         }
     }
 
@@ -27,6 +27,8 @@ class OrigamiService {
                 it[hash] = origami.hash
                 it[date] = System.currentTimeMillis()
                 it[tags] = origami.tags
+                it[likes] = 0
+                it[comments] = "[]"
             } get Origamis.id)
         }
         return getOrigami(key)!!
@@ -37,7 +39,9 @@ class OrigamiService {
             id = row[Origamis.id],
             hash = row[Origamis.hash],
             date = row[Origamis.date],
-            tags = row[Origamis.tags]
+            tags = row[Origamis.tags],
+            likes = row[Origamis.likes],
+            comments = row[Origamis.comments]
         )
 
     suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null): List<Origami> = dbQuery {
@@ -65,6 +69,18 @@ class OrigamiService {
     suspend fun updateTags(id: Int, tags: String) = dbQuery {
         Origamis.update({ Origamis.id eq id }) {
             it[Origamis.tags] = tags
+        }
+    }
+
+    suspend fun updateLikes(id: Int, count: Int) = dbQuery {
+        Origamis.update({ Origamis.id eq id }) {
+            it[likes] = count
+        }
+    }
+
+    suspend fun updateComments(id: Int, json: String) = dbQuery {
+        Origamis.update({ Origamis.id eq id }) {
+            it[comments] = json
         }
     }
 
