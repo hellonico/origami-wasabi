@@ -20,17 +20,20 @@ class ImgProcessor {
 
     suspend fun processPost(
         multipart: MultiPartData, origamiService: OrigamiService
-    ): List<Int> {
+    ): Map<String, Any> {
         val parts: List<PartData> = multipart.readAllParts()
         val filter = loadFilter(parts)
         val tagsPart = parts.find { it.name == "tags" && it is PartData.FormItem } as? PartData.FormItem
         val tags = tagsPart?.value ?: ""
+        
+        val workspacePart = parts.find { it.name == "workspace" && it is PartData.FormItem } as? PartData.FormItem
+        val workspaceId = workspacePart?.value ?: "default"
 
         val result : ArrayList<Int> = arrayListOf<Int>()
 
         for (part in parts) {
             println("Part: ${part.name} -> ${part.contentType}")
-            if(part.name == "filter" || part.name == "tags") continue
+            if(part.name == "filter" || part.name == "tags" || part.name == "workspace") continue
             when (part) {
                 is PartData.FileItem -> {
                     val imgfile = File.createTempFile("tmp_", ".jpg")
@@ -46,14 +49,20 @@ class ImgProcessor {
                     val mat = Imgcodecs.imread(fileIn.absolutePath)
                     val out: Mat = filter.apply(mat)
                     Imgcodecs.imwrite(fileOut.absolutePath, out)
-                    origamiService.addOrigami(model.Origami(id = 0, hash = hash, date = System.currentTimeMillis(), tags = tags))
+                    origamiService.addOrigami(model.Origami(
+                        id = 0, 
+                        hash = hash, 
+                        date = System.currentTimeMillis(), 
+                        tags = tags,
+                        workspaceId = workspaceId
+                    ))
                     result.add(hash)
                 }
                 else -> {}
             }
             part.dispose()
         }
-        return result
+        return mapOf("hashes" to result, "workspaceId" to workspaceId)
     }
 
     private fun savePartToFile(

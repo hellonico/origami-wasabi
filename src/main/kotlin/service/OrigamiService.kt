@@ -31,6 +31,7 @@ class OrigamiService {
                 it[shares] = 0
                 it[comments] = "[]"
                 it[lastUpdated] = System.currentTimeMillis()
+                it[workspaceId] = origami.workspaceId
             } get Origamis.id)
         }
         return getOrigami(key)!!
@@ -45,14 +46,15 @@ class OrigamiService {
             likes = row[Origamis.likes],
             comments = row[Origamis.comments],
             lastUpdated = row[Origamis.lastUpdated],
-            shares = row[Origamis.shares]
+            shares = row[Origamis.shares],
+            workspaceId = row[Origamis.workspaceId]
         )
 
-    suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null, sortBy: String = "id"): List<Origami> = dbQuery {
-        val query = if (tag != null && tag.isNotEmpty()) {
-            Origamis.select { Origamis.tags like "%$tag%" }
-        } else {
-            Origamis.selectAll()
+    suspend fun getAll(limit: Int = 100, offset: Long = 0, tag: String? = null, sortBy: String = "id", workspaceId: String = "default"): List<Origami> = dbQuery {
+        val query = Origamis.select { Origamis.workspaceId eq workspaceId }
+        
+        if (tag != null && tag.isNotEmpty()) {
+            query.andWhere { Origamis.tags like "%$tag%" }
         }
         
         val sortOrder = if(sortBy == "recent") {
