@@ -179,7 +179,7 @@ fun Route.origami(origamiService: OrigamiService) {
 
             //Initial load only first batch
             val initialOrigamis: List<model.Origami> = origamiService.getAll(20, 0, selectedTag)
-            val jsonOrigamis = util.JsonMapper.defaultMapper.encodeToString(initialOrigamis)
+            val jsonOrigamis = lenientJson.encodeToString(initialOrigamis)
 
             call.respondHtml {
                 head {
@@ -331,6 +331,7 @@ fun Route.origami(origamiService: OrigamiService) {
                                         try {
                                             // Ensure comments is a string before parsing
                                             if (typeof comments === 'string') {
+                                                if(comments === '[]') return [];
                                                 return JSON.parse(comments);
                                             } else if (Array.isArray(comments)) {
                                                 // Should not happen with Kotlin data mapping but safe to handle
