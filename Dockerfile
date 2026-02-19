@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM eclipse-temurin:17-jdk
 EXPOSE 8095
 RUN mkdir /app
 COPY build/install/wasabi/ /app/
